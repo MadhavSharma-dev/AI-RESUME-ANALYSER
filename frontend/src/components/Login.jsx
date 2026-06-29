@@ -41,7 +41,7 @@ function Login() {
         </button>
 
         <p className="auth-footer">
-          Don't have an account?
+          Don't have an account? <a href="/signup">Sign Up</a>
         </p>
       </div>
     </div>

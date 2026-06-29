@@ -76,8 +76,8 @@ function Signup() {
           Create Account
         </button>
 
-        <p className="login-link">
-          Already have an account? 
+        <p className="login-link" >
+          Already have an account? <a href="/login">Log in</a>
         </p>
       </div>
     </div>
