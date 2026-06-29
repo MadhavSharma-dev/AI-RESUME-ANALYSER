@@ -6,18 +6,19 @@
 }
 
 :root {
-  --bg-primary: #0f0f1a;
-  --bg-secondary: #1a1a2e;
-  --bg-card: #16213e;
+  --bg-primary: #f4f6fb;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
   --accent: #6c63ff;
   --accent-hover: #574fd6;
-  --accent-light: rgba(108, 99, 255, 0.15);
-  --text-primary: #f0f0f0;
-  --text-secondary: #a0a0b8;
-  --border: #2a2a4a;
-  --input-bg: #1e1e35;
-  --danger: #ff4d6d;
-  --success: #4ade80;
+  --accent-light: rgba(108, 99, 255, 0.1);
+  --text-primary: #1a1a2e;
+  --text-secondary: #5a5a72;
+  --border: #e0e0f0;
+  --input-bg: #f8f8ff;
+  --danger: #e53e6d;
+  --success: #22c55e;
+  --shadow: 0 4px 24px rgba(108, 99, 255, 0.08);
   --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 

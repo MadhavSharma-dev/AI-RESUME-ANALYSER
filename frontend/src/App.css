@@ -7,6 +7,7 @@
   height: 64px;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(108, 99, 255, 0.06);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -71,40 +72,43 @@
 }
 
 .btn-danger:hover {
-  background: rgba(255, 77, 109, 0.1);
+  background: rgba(229, 62, 109, 0.08);
 }
 
-/* ===== SIGNUP PAGE ===== */
-.signup-wrapper {
+/* ===== SHARED CARD WRAPPER ===== */
+.page-wrapper {
   min-height: calc(100vh - 64px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  background: var(--bg-primary);
 }
 
-.signup-card {
+.auth-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 2.5rem 2rem;
   width: 100%;
   max-width: 440px;
+  box-shadow: var(--shadow);
 }
 
-.signup-card h1 {
+.auth-card h1 {
   font-size: 1.6rem;
   font-weight: 700;
   margin-bottom: 0.4rem;
   color: var(--text-primary);
 }
 
-.signup-card .subtitle {
+.auth-card .subtitle {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: 1.8rem;
 }
 
+/* ===== FORM ===== */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -126,15 +130,16 @@
   color: var(--text-primary);
   font-size: 0.95rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-group input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
 }
 
 .form-group input::placeholder {
-  color: #555570;
+  color: #b0b0c8;
 }
 
 .btn-submit {
@@ -148,28 +153,39 @@
   color: #fff;
   border: none;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .btn-submit:hover {
   background: var(--accent-hover);
+  box-shadow: 0 4px 12px rgba(108, 99, 255, 0.25);
 }
 
-.login-link {
+/* ===== AUTH FOOTER LINK ===== */
+.auth-footer {
   text-align: center;
   margin-top: 1.2rem;
   font-size: 0.88rem;
   color: var(--text-secondary);
 }
 
-.login-link a {
+.auth-footer a {
   color: var(--accent);
   font-weight: 500;
 }
 
-.login-link a:hover {
+.auth-footer a:hover {
   text-decoration: underline;
 }
+
+/* ===== SIGNUP (legacy class aliases) ===== */
+.signup-wrapper { min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.signup-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 440px; box-shadow: var(--shadow); }
+.signup-card h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text-primary); }
+.signup-card .subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.8rem; }
+.login-link { text-align: center; margin-top: 1.2rem; font-size: 0.88rem; color: var(--text-secondary); }
+.login-link a { color: var(--accent); font-weight: 500; }
+.login-link a:hover { text-decoration: underline; }
 
 /* ===== HOME PAGE PLACEHOLDER ===== */
 .home-placeholder {
