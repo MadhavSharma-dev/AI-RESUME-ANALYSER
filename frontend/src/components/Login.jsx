@@ -1,15 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../App.css";
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    console.log("Email:", email);
-    console.log("Password:", password);
-  };
-
+    navigate("/Dashboard");
+};
   return (
     <div className="page-wrapper">
       <div className="auth-card">
@@ -36,9 +36,8 @@ function Login() {
           />
         </div>
 
-        <button className="btn-submit" onClick={handleLogin}>
-          Login
-        </button>
+        <button className="btn-submit" onClick={handleLogin}> Log In</button>
+
 
         <p className="auth-footer">
           Don't have an account? <a href="/signup">Sign Up</a>

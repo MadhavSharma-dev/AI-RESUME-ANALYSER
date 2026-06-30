@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../App.css";
 
 function Signup() {
+
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -9,12 +12,22 @@ function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSignup = () => {
-    console.log("Name:", name);
-    console.log("Email:", email);
-    console.log("Phone:", phone);
-    console.log("Password:", password);
-    console.log("Confirm Password:", confirmPassword);
-  };
+    if(
+      !name || 
+      !email ||
+      !phone ||
+      ! password ||
+      ! confirmPassword
+    ){
+      alert("Please fill all fields ");
+      return
+    }
+  }
+
+  if(password !== confirmPassword){
+    alert("Passwords do not match");
+  }
+  navigate("/login");
 
   return (
     <div className="signup-wrapper">
@@ -72,9 +85,8 @@ function Signup() {
           />
         </div>
 
-        <button className="btn-submit" onClick={handleSignup}>
-          Create Account
-        </button>
+        <button className="btn-submit" onClick={() => {
+          handleSignup(); navigate("/login");}}>Create Account </button>
 
         <p className="login-link" >
           Already have an account? <a href="/login">Log in</a>
