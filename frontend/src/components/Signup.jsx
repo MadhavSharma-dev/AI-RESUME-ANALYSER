@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../App.css";
 
 function Signup() {
-
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -12,22 +11,16 @@ function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSignup = () => {
-    if(
-      !name || 
-      !email ||
-      !phone ||
-      ! password ||
-      ! confirmPassword
-    ){
-      alert("Please fill all fields ");
-      return
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      alert("Please fill all fields");
+      return;
     }
-  }
-
-  if(password !== confirmPassword){
-    alert("Passwords do not match");
-  }
-  navigate("/login");
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+    navigate("/login");
+  };
 
   return (
     <div className="signup-wrapper">
@@ -36,8 +29,9 @@ function Signup() {
         <p className="subtitle">Join AI Resume Analyser and land your dream job</p>
 
         <div className="form-group">
-          <label>Full Name</label>
+          <label htmlFor="signup-name">Full Name</label>
           <input
+            id="signup-name"
             type="text"
             placeholder="Enter your name"
             value={name}
@@ -46,8 +40,9 @@ function Signup() {
         </div>
 
         <div className="form-group">
-          <label>Email</label>
+          <label htmlFor="signup-email">Email</label>
           <input
+            id="signup-email"
             type="email"
             placeholder="Enter your email"
             value={email}
@@ -56,9 +51,10 @@ function Signup() {
         </div>
 
         <div className="form-group">
-          <label>Phone</label>
+          <label htmlFor="signup-phone">Phone</label>
           <input
-            type="text"
+            id="signup-phone"
+            type="tel"
             placeholder="Enter phone number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -66,8 +62,9 @@ function Signup() {
         </div>
 
         <div className="form-group">
-          <label>Password</label>
+          <label htmlFor="signup-password">Password</label>
           <input
+            id="signup-password"
             type="password"
             placeholder="Create a password"
             value={password}
@@ -76,8 +73,9 @@ function Signup() {
         </div>
 
         <div className="form-group">
-          <label>Confirm Password</label>
+          <label htmlFor="signup-confirm">Confirm Password</label>
           <input
+            id="signup-confirm"
             type="password"
             placeholder="Confirm your password"
             value={confirmPassword}
@@ -85,11 +83,10 @@ function Signup() {
           />
         </div>
 
-        <button className="btn-submit" onClick={() => {
-          handleSignup(); navigate("/login");}}>Create Account </button>
+        <button className="btn-submit" onClick={handleSignup}>Create Account</button>
 
-        <p className="login-link" >
-          Already have an account? <a href="/login">Log in</a>
+        <p className="login-link">
+          Already have an account? <Link to="/login">Log in</Link>
         </p>
       </div>
     </div>

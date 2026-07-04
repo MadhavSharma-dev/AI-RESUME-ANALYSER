@@ -1,15 +1,21 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../App.css";
 
-function Login() {
+function Login({ handleLogin }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    navigate("/Dashboard");
-};
+  const handleLoginClick = () => {
+    if (!email || !password) {
+      alert("Please fill all fields");
+      return;
+    }
+    handleLogin();
+    navigate("/dashboard");
+  };
+
   return (
     <div className="page-wrapper">
       <div className="auth-card">
@@ -17,8 +23,9 @@ function Login() {
         <p className="subtitle">Login to continue</p>
 
         <div className="form-group">
-          <label>Email</label>
+          <label htmlFor="login-email">Email</label>
           <input
+            id="login-email"
             type="email"
             placeholder="Enter your email"
             value={email}
@@ -27,8 +34,9 @@ function Login() {
         </div>
 
         <div className="form-group">
-          <label>Password</label>
+          <label htmlFor="login-password">Password</label>
           <input
+            id="login-password"
             type="password"
             placeholder="Enter your password"
             value={password}
@@ -36,11 +44,10 @@ function Login() {
           />
         </div>
 
-        <button className="btn-submit" onClick={handleLogin}> Log In</button>
-
+        <button className="btn-submit" onClick={handleLoginClick}>Log In</button>
 
         <p className="auth-footer">
-          Don't have an account? <a href="/signup">Sign Up</a>
+          Don't have an account? <Link to="/signup">Sign Up</Link>
         </p>
       </div>
     </div>
