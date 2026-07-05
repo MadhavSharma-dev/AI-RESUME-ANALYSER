@@ -12,7 +12,9 @@ function Login({ handleLogin }) {
       alert("Please fill all fields");
       return;
     }
-    handleLogin();
+    // Derive display name from email until backend provides it
+    const name = email.split("@")[0];
+    handleLogin(name);
     navigate("/dashboard");
   };
 

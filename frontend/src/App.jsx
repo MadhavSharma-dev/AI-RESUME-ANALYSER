@@ -9,9 +9,27 @@ import UploadResume from "./components/uploadResume";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState({ name: "" });
+  const [resumes, setResumes] = useState([]);
 
-  const handleLogin = () => setIsLoggedIn(true);
-  const handleLogout = () => setIsLoggedIn(false);
+  const handleLogin = (name) => {
+    setIsLoggedIn(true);
+    setUser({ name });
+  };
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser({ name: "" });
+  };
+  const handleResumeUploaded = (file) => {
+    const newResume = {
+      id: Date.now(),
+      name: file.name,
+      updated: new Date().toLocaleDateString("en-GB").replace(/\//g, "/"),
+      versions: 1,
+      file,
+    };
+    setResumes((prev) => [newResume, ...prev]);
+  };
 
   return (
     <>
@@ -22,11 +40,11 @@ function App() {
         <Route path="/login" element={<Login handleLogin={handleLogin} />} />
         <Route
           path="/dashboard"
-          element={isLoggedIn ? <Dashboard handleLogout={handleLogout} /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <Dashboard handleLogout={handleLogout} user={user} resumes={resumes} setResumes={setResumes} /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/upload"
-          element={isLoggedIn ? <UploadResume /> : <Navigate to="/login" replace />}
+          element={isLoggedIn ? <UploadResume onResumeUploaded={handleResumeUploaded} /> : <Navigate to="/login" replace />}
         />
       </Routes>
     </>
