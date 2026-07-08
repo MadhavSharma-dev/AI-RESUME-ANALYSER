@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 /* ===== GLOBAL RESET & BASE ===== */
 *, *::before, *::after {
   margin: 0;
@@ -6,31 +8,163 @@
 }
 
 :root {
-  --bg-primary: #f4f6fb;
+  /* User Palette */
+  --navy: #1F2A44;
+  --navy-dark: #121A2B;
+  --navy-light: #2c3b5d;
+  --beige: #E8DCC8;
+  --beige-light: #F9F6F0;
+  --beige-dark: #D4C4AA;
+  --gold: #C6A75E;
+  --gold-hover: #B0924F;
+  --gold-light: rgba(198, 167, 94, 0.15);
+  --gold-glow: rgba(198, 167, 94, 0.35);
+
+  /* Global UI Overrides */
+  --bg-primary: var(--beige-light);
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
-  --accent: #6c63ff;
-  --accent-hover: #574fd6;
-  --accent-light: rgba(108, 99, 255, 0.1);
-  --text-primary: #1a1a2e;
-  --text-secondary: #5a5a72;
-  --border: #e0e0f0;
-  --input-bg: #f8f8ff;
-  --danger: #e53e6d;
-  --success: #22c55e;
-  --shadow: 0 4px 24px rgba(108, 99, 255, 0.08);
-  --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --accent: var(--navy);
+  --accent-hover: var(--navy-dark);
+  --accent-light: rgba(31, 42, 68, 0.08);
+  --text-primary: var(--navy);
+  --text-secondary: #55627A;
+  --border: rgba(31, 42, 68, 0.1);
+  --input-bg: #fdfcf9;
+  --danger: #d9383a;
+  --success: #288c52;
+  --shadow: 0 10px 30px rgba(31, 42, 68, 0.06);
+  --font-display: 'Outfit', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font);
+  font-family: var(--font-sans);
   min-height: 100vh;
   line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom premium scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--beige-light);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--navy-light);
+  border: 2px solid var(--beige-light);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
 }
 
 a {
   text-decoration: none;
   color: inherit;
+  transition: all 0.25s ease;
 }
+
+/* ===== GLOBAL ANIMATIONS ===== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes drawProgress {
+  from {
+    stroke-dashoffset: 251.2;
+  }
+  to {
+    stroke-dashoffset: var(--dashoffset);
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Helper animation classes */
+.anim-fade-up {
+  opacity: 0;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.anim-scale-up {
+  opacity: 0;
+  animation: scaleUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.anim-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }

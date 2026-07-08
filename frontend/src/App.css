@@ -667,3 +667,217 @@
   height: 80px;
   opacity: 0.5;
 }
+
+/* ===== RESUME DETAILS MODAL / PANEL ===== */
+.dash-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(31, 42, 68, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 1000;
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dash-modal-card {
+  width: 100%;
+  max-width: 640px;
+  height: 100vh;
+  background-color: #ffffff;
+  box-shadow: -10px 0 40px rgba(31, 42, 68, 0.12);
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem;
+  overflow-y: auto;
+  animation: slideLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.dash-modal-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.dash-modal-close:hover {
+  color: var(--navy);
+}
+
+.dash-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding-right: 2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.version-select-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.version-pill {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.8rem;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.version-pill:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+.version-pill.active {
+  background-color: var(--navy);
+  border-color: var(--navy);
+  color: var(--beige-light);
+}
+
+.btn-add-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--gold-light);
+  color: var(--gold);
+  border: 1px solid rgba(198, 167, 94, 0.25);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.4rem 0.8rem;
+  border-radius: 99px;
+  cursor: pointer;
+  margin-left: auto;
+  text-decoration: none;
+}
+
+.btn-add-version:hover {
+  background-color: var(--gold);
+  color: var(--navy);
+}
+
+.modal-details-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.5fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.modal-scores-pane {
+  background-color: var(--beige-light);
+  border-radius: 16px;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.modal-score-lbl {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.modal-score-num {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.modal-feedback-box {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  width: 100%;
+  margin-top: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+}
+
+.modal-feedback-box h4 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  color: var(--navy);
+  text-align: left;
+}
+
+.modal-feedback-list {
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding-left: 1rem;
+}
+
+.modal-feedback-list li {
+  margin-bottom: 0.4rem;
+}
+
+.modal-analysis-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .modal-details-grid {
+    grid-template-columns: 1fr;
+  }
+  .dash-modal-card {
+    padding: 1.5rem;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
