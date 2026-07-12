@@ -1,0 +1,173 @@
+================================================================
+  APP.JSX + MAIN.JSX — Concepts & Logic Breakdown
+================================================================
+
+FILES:
+  frontend/src/App.jsx
+  frontend/src/main.jsx
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MAIN.JSX — The Entry Point
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </StrictMode>
+);
+
+  document.getElementById("root")  → finds <div id="root"> in index.html
+  createRoot(...)                   → hands that DOM node to React
+  .render(...)                      → mounts the full component tree
+
+  BrowserRouter  → enables routing everywhere in the app using the
+                   browser's History API (real URLs like /login, /dashboard)
+                   without this, useNavigate and Link will crash.
+
+  StrictMode     → development-only. Renders components twice to surface
+                   bugs. Warns about deprecated APIs. No effect in production.
+                   This is why console.log may appear twice in dev mode.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+APP.JSX — Global State
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+App.jsx owns three pieces of state shared across the whole app:
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user,       setUser]       = useState({ name: "" });
+  const [loading,    setLoading]    = useState(true);
+
+  isLoggedIn  → whether the user is authenticated
+  user        → object holding { name, email } of the logged-in user
+  loading     → true while the app checks localStorage for an existing
+                session on first mount (prevents flash of wrong UI)
+
+They live in App because multiple components (Navbar, Dashboard,
+protected routes) all need this data. This is "Lifting State Up".
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Session Restoration on Mount (useEffect)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    getProfile()
+      .then((profile) => {
+        setIsLoggedIn(true);
+        setUser({ name: profile.name, email: profile.email });
+      })
+      .catch((err) => {
+        console.error("Profile check failed:", err.message);
+        localStorage.removeItem("token");  // token invalid/expired, clear it
+      })
+      .finally(() => setLoading(false));
+  } else {
+    setLoading(false);
+  }
+}, []);  // ← [] means run once on mount only
+
+When the app first loads, it checks if a JWT token exists in
+localStorage. If yes, it calls GET /api/auth/profile to verify
+the token is still valid and fetches the user's real name/email.
+This keeps the user logged in across browser refreshes.
+
+If loading is still true, a full-screen "Loading Session..." message
+is shown instead of flashing the wrong UI.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: handleLogin and handleLogout
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const handleLogin = (userData) => {
+  setIsLoggedIn(true);
+  setUser({ name: userData.name, email: userData.email });
+};
+
+Login.jsx stores the JWT in localStorage, then calls handleLogin
+with the real user data returned from the backend.
+
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  setIsLoggedIn(false);
+  setUser({ name: "" });
+};
+
+Removes the JWT token so the next page load won't restore the session.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: React Router — Routes + Protected Routes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<Routes>
+  <Route path="/"         element={<Home isLoggedIn={isLoggedIn} handleLogout={handleLogout} />} />
+  <Route path="/signup"   element={<Signup />} />
+  <Route path="/login"    element={<Login handleLogin={handleLogin} />} />
+  <Route
+    path="/dashboard"
+    element={isLoggedIn
+      ? <Dashboard handleLogout={handleLogout} user={user} />
+      : <Navigate to="/login" replace />}
+  />
+  <Route
+    path="/upload"
+    element={isLoggedIn
+      ? <UploadResume />
+      : <Navigate to="/login" replace />}
+  />
+</Routes>
+
+Routes renders only the first matching Route.
+/dashboard and /upload are protected — if isLoggedIn is false,
+Navigate redirects immediately to /login.
+The replace prop removes the protected page from history so the
+browser back button doesn't return to it.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPONENT TREE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+main.jsx
+└── StrictMode
+    └── BrowserRouter
+        └── App  (owns isLoggedIn, user, loading)
+            ├── Navbar              ← gets isLoggedIn, handleLogout
+            └── Routes
+                ├── /               → Home (gets isLoggedIn, handleLogout)
+                ├── /signup         → Signup
+                ├── /login          → Login (gets handleLogin)
+                ├── /dashboard      → Dashboard (protected, gets handleLogout, user)
+                └── /upload         → UploadResume (protected)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+API LAYER — src/lib/api.js
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+All HTTP calls are centralised in api.js via a helper apiFetch():
+
+  const apiFetch = async (endpoint, options = {}) => {
+    const token = localStorage.getItem("token");
+    // Attaches Authorization: Bearer <token> if logged in
+    // Does NOT set Content-Type for FormData (multer needs browser boundaries)
+    ...
+  };
+
+Exported functions and what they call:
+  login(email, password)             → POST /api/auth/login
+  signup(name, email, password)      → POST /api/auth/signup
+  getProfile()                       → GET  /api/auth/profile
+  fetchResumesList()                 → GET  /api/resumes
+  fetchResumeDetails(id)             → GET  /api/resumes/:id
+  uploadNewResume(file, targetRole)  → POST /api/resumes        (FormData)
+  uploadResumeVersion(id, file, role)→ POST /api/resumes/:id/version (FormData)
+  removeResume(id)                   → DELETE /api/resumes/:id

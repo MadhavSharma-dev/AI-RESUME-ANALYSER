@@ -1,0 +1,118 @@
+.settings-page {
+  flex: 1;
+  padding: 2.5rem 2.5rem 3rem;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.settings-header {
+  margin-bottom: 2rem;
+}
+
+.settings-title {
+  font-family: var(--font-display, serif);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--navy, #1f2a44);
+  margin: 0 0 0.2rem;
+}
+
+.settings-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #7a8099);
+  margin: 0;
+}
+
+.settings-card {
+  background: #ffffff;
+  border: 1px solid var(--border, rgba(31,42,68,0.1));
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.settings-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy, #1f2a44);
+  margin: 0 0 1.25rem;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.settings-field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--navy, #1f2a44);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-field input {
+  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border, rgba(31,42,68,0.12));
+  font-size: 0.875rem;
+  font-family: var(--font-body, sans-serif);
+  color: var(--navy, #1f2a44);
+  outline: none;
+  background: var(--bg-secondary, #f9f8f5);
+  transition: border-color 0.15s;
+}
+
+.settings-field input:focus {
+  border-color: var(--navy, #1f2a44);
+  background: #fff;
+}
+
+.settings-field input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-save-btn {
+  padding: 0.65rem 1.25rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--navy, #1f2a44);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: opacity 0.15s;
+}
+
+.settings-save-btn:hover {
+  opacity: 0.85;
+}
+
+.settings-danger-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #7a8099);
+  margin: 0 0 1rem;
+}
+
+.settings-danger-btn {
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid #e53e6d;
+  background: transparent;
+  color: #e53e6d;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: not-allowed;
+  opacity: 0.6;
+}

@@ -1,0 +1,226 @@
+================================================================
+  UPLOADRESUME.JSX — Concepts & Logic Breakdown
+================================================================
+
+FILE: frontend/src/components/uploadResume.jsx
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT THIS COMPONENT DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Two-column layout:
+  Left  → upload form (target role input, file picker, analyze button)
+  Right → live PDF preview of the selected file (or placeholder)
+
+Supports two modes:
+  1. New resume  → POST /api/resumes           (no query param)
+  2. New version → POST /api/resumes/:id/version  (?resumeId=<id> in URL)
+
+Validates file type (PDF/DOC/DOCX) and size (max 5MB).
+Shows animated loading phases during AI analysis.
+On success, redirects to /dashboard after 1.2 seconds.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Constants outside the component
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const ALLOWED_TYPES = ["application/pdf", "application/msword", ...];
+const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx"];
+
+const LOADING_PHASES = [
+  "Extracting document text layout...",
+  "Roasting formatting structures...",
+  ...
+];
+
+Outside the component = created once, never recreated on re-render.
+Any value that doesn't depend on props or state belongs outside.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Reading query params to detect upload mode
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const queryParams = new URLSearchParams(window.location.search);
+const resumeId = queryParams.get("resumeId");
+
+If the URL is /upload?resumeId=abc123, resumeId = "abc123".
+If the URL is just /upload, resumeId = null.
+
+This single variable controls which API function is called:
+  resumeId ? uploadResumeVersion(resumeId, ...) : uploadNewResume(...)
+
+And which button label / heading is shown:
+  {resumeId ? "Upload New Version" : "Upload Your Resume"}
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: State
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const [selectedFile,    setSelectedFile]    = useState(null);
+const [previewUrl,      setPreviewUrl]      = useState(null);
+const [targetRole,      setTargetRole]      = useState("");
+const [isAnalyzing,     setIsAnalyzing]     = useState(false);
+const [loadingPhaseIdx, setLoadingPhaseIdx] = useState(0);
+const [uploadStatus,    setUploadStatus]    = useState(null);
+const [error,           setError]           = useState("");
+
+  selectedFile    → the File object (null if nothing picked yet)
+  previewUrl      → blob URL for the PDF iframe, null for DOC/DOCX
+  targetRole      → text input for target job title, sent to backend
+  isAnalyzing     → true while the API call is in-flight
+  loadingPhaseIdx → index into LOADING_PHASES array for the spinner message
+  uploadStatus    → "success" | "error" | null
+  error           → validation or API error message ("" = no error)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: useEffect for animated loading phases
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+useEffect(() => {
+  let interval;
+  if (isAnalyzing) {
+    interval = setInterval(() => {
+      setLoadingPhaseIdx((prev) => (prev + 1) % LOADING_PHASES.length);
+    }, 1800);
+  } else {
+    setLoadingPhaseIdx(0);  // reset when not analyzing
+  }
+  return () => clearInterval(interval);
+}, [isAnalyzing]);
+
+Dependency array [isAnalyzing] means this effect re-runs whenever
+isAnalyzing changes. When true, starts a 1.8s interval cycling through
+loading phase messages. When false, stops the interval and resets the index.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: File validation + PDF preview
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const handleFileChange = (event) => {
+  const file = event.target.files[0];
+  setError(""); setUploadStatus(null); setPreviewUrl(null);
+
+  if (!file) return;
+
+  const ext = "." + file.name.split(".").pop().toLowerCase();
+  if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXTENSIONS.includes(ext)) {
+    setError("Only PDF, DOC, and DOCX files are allowed.");
+    event.target.value = "";   // reset the file picker
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {  // 5MB in bytes
+    setError("File size must be under 5MB.");
+    event.target.value = "";
+    return;
+  }
+
+  setSelectedFile(file);
+  if (file.type === "application/pdf") {
+    setPreviewUrl(URL.createObjectURL(file));  // live PDF preview
+  }
+};
+
+HTML accept=".pdf,.doc,.docx" only filters the file picker UI — users
+can bypass it. Always validate in JS too.
+Both MIME type AND extension are checked because file.type can be
+empty or unreliable on some operating systems.
+URL.createObjectURL(file) creates a temporary blob: URL pointing to
+the file in memory — passed to an <iframe src> so the browser renders
+the PDF inline. Only works for PDFs (browsers can't preview DOC/DOCX).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: handleUpload — real API call
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const handleUpload = () => {
+  if (!selectedFile) { setError("Please select a resume first."); return; }
+
+  setIsAnalyzing(true);
+  setError("");
+
+  const uploadAction = resumeId
+    ? uploadResumeVersion(resumeId, selectedFile, targetRole || "General")
+    : uploadNewResume(selectedFile, targetRole || "General");
+
+  uploadAction
+    .then(() => {
+      setUploadStatus("success");
+      setIsAnalyzing(false);
+      setTimeout(() => navigate("/dashboard"), 1200);
+    })
+    .catch((err) => {
+      setIsAnalyzing(false);
+      setError(err.message || "Failed to analyze resume. Please try again.");
+      setUploadStatus("error");
+    });
+};
+
+Both upload functions send FormData with the file and targetRole.
+The backend parses the PDF, runs Gemini AI analysis, stores results
+in MongoDB, and returns the saved resume object.
+targetRole defaults to "General" if left blank.
+1.2s delay after success lets the user see the success message.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: PDF preview with iframe
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{previewUrl ? (
+  <iframe src={previewUrl} title="Resume Preview" className="resume-preview-frame" />
+) : (
+  <div className="preview-placeholder">...</div>
+)}
+
+If a PDF was picked → show the iframe with the blob URL.
+Otherwise → show a placeholder SVG + hint text.
+The iframe lets the browser render the PDF natively.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Custom styled file input
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<label htmlFor="resume-upload" className="file-label">
+  {selectedFile ? selectedFile.name : "Choose a file..."}
+</label>
+<input id="resume-upload" type="file" accept=".pdf,.doc,.docx"
+  onChange={handleFileChange} className="file-input" disabled={isAnalyzing} />
+
+.file-input { display: none } hides the ugly default browser input.
+Clicking the styled label triggers the hidden input because
+htmlFor matches the input's id.
+Label text is dynamic — shows filename once a file is chosen.
+disabled={isAnalyzing} prevents changing the file mid-upload.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Disabled button + conditional spinner
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{isAnalyzing ? (
+  <div>
+    <div className="uploader-spinner"></div>
+    <p>{LOADING_PHASES[loadingPhaseIdx]}</p>
+  </div>
+) : (
+  <button
+    className="btn-submit"
+    onClick={handleUpload}
+    disabled={!selectedFile}
+  >
+    {resumeId ? "Roast New Version" : "Analyze Resume"}
+  </button>
+)}
+
+While isAnalyzing is true → spinner + cycling phase message.
+While false → analyze button (disabled if no file selected).
+!selectedFile → true when null → button disabled.

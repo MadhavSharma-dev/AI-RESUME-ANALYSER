@@ -1,0 +1,232 @@
+================================================================
+  DASHBOARD.JSX — Concepts & Logic Breakdown
+================================================================
+
+FILE: frontend/src/components/Dashboard.jsx
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT THIS COMPONENT DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Top row: greeting with the real user's name + search bar + logout icon.
+Two-column layout:
+  Left  → drag-and-drop upload card (navigates to /upload on click or drop)
+  Right → live-searchable list of resumes fetched from the backend
+
+Clicking a resume card opens a slide-over detail modal showing
+all version pills, scores, strengths, improvements, keyword gaps,
+and before/after bullet rewrites.
+
+All resume data comes from the backend via fetchResumesList() on mount.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROPS RECEIVED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function Dashboard({ handleLogout, user }) { ... }
+
+  handleLogout  → clears token + auth state in App.jsx
+  user          → object { name, email } — used for the greeting
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: State
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const [resumes,             setResumes]             = useState([]);
+const [loading,             setLoading]             = useState(true);
+const [search,              setSearch]              = useState("");
+const [dragOver,            setDragOver]            = useState(false);
+const [selectedResume,      setSelectedResume]      = useState(null);
+const [activeVersionNumber, setActiveVersionNumber] = useState(1);
+
+  resumes              → array of resume objects fetched from the backend
+  loading              → true while the API call is in-flight
+  search               → current value of the search input
+  dragOver             → true while a file is dragged over the upload card
+  selectedResume       → the resume object currently shown in the modal
+  activeVersionNumber  → which version pill is selected in the modal
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Fetching data on mount (useEffect)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+useEffect(() => {
+  fetchResumesList()
+    .then((data) => setResumes(data))
+    .catch((err) => console.error("Error loading resumes:", err.message))
+    .finally(() => setLoading(false));
+}, []);
+
+Runs once when Dashboard mounts.
+fetchResumesList() calls GET /api/resumes with the JWT token.
+Backend returns the logged-in user's resumes, sorted newest first.
+loading stays true until .finally() runs, preventing a premature
+empty-state message.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Dynamic greeting from user prop
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const displayName = user?.name
+  ? user.name.charAt(0).toUpperCase() + user.name.slice(1)
+  : "there";
+
+<h1>Hello, {displayName}.</h1>
+
+user?.name → optional chaining, safe if user is undefined.
+Capitalizes the first letter of the name.
+Falls back to "Hello, there." if name is missing.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Derived state — filtering without extra useState
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const filtered = resumes.filter((r) =>
+  r.name.toLowerCase().includes(search.toLowerCase())
+);
+
+Not a useState — computed inline on every render.
+When search or resumes changes, React re-renders and
+filtered is recalculated automatically.
+.toLowerCase() on both sides = case-insensitive search.
+
+Rule: if a value can be derived from existing state, don't
+create a new useState for it.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Deleting a resume (API + state update)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const handleDelete = (id, e) => {
+  e.stopPropagation();  // prevents the click from opening the detail modal
+  if (window.confirm("Are you sure you want to delete this resume?")) {
+    removeResume(id)
+      .then(() => {
+        setResumes((prev) => prev.filter((r) => r._id !== id));
+        if (selectedResume && selectedResume._id === id) {
+          setSelectedResume(null);  // close modal if this one was open
+        }
+      })
+      .catch((err) => alert(err.message || "Failed to delete resume"));
+  }
+};
+
+removeResume(id) calls DELETE /api/resumes/:id.
+On success, the local state is updated by filtering out the deleted item.
+Functional update form (prev => ...) guarantees latest state.
+
+WRONG:  resumes.splice(i, 1); setResumes(resumes);
+RIGHT:  setResumes(prev => prev.filter(r => r._id !== id));
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Resume Detail Modal
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Clicking a resume card calls:
+  const handleOpenDetails = (resume) => {
+    setSelectedResume(resume);
+    setActiveVersionNumber(resume.versions.length);  // start on latest version
+  };
+
+When selectedResume is not null, the modal is shown:
+  {selectedResume && (
+    <div className="dash-modal-overlay" onClick={() => setSelectedResume(null)}>
+      <div className="dash-modal-card" onClick={(e) => e.stopPropagation()}>
+        ...
+      </div>
+    </div>
+  )}
+
+Clicking the overlay closes the modal (sets selectedResume to null).
+e.stopPropagation() on the inner card prevents that close from
+firing when the user clicks inside the modal.
+
+Version pills inside the modal:
+  {selectedResume.versions.map((ver) => (
+    <button
+      key={ver.versionNumber}
+      className={`version-pill ${activeVersionNumber === ver.versionNumber ? "active" : ""}`}
+      onClick={() => setActiveVersionNumber(ver.versionNumber)}
+    >
+      V{ver.versionNumber} ({ver.overallScore}%)
+    </button>
+  ))}
+
+activeVersion is derived (not stored in state):
+  const activeVersion = selectedResume?.versions.find(
+    (v) => v.versionNumber === activeVersionNumber
+  ) || selectedResume?.versions[selectedResume.versions.length - 1];
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Drag and drop events
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<div
+  className={`dash-upload-card ${dragOver ? "drag-active" : ""}`}
+  onClick={() => navigate("/upload")}
+  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+  onDragLeave={() => setDragOver(false)}
+  onDrop={handleDrop}
+>
+
+  onDragOver  → e.preventDefault() is REQUIRED or the browser blocks
+                the drop and onDrop never fires.
+  onDragLeave → removes highlight when drag leaves the element.
+  onDrop      → stops browser opening the file, then navigates to /upload.
+
+const handleDrop = (e) => {
+  e.preventDefault();
+  setDragOver(false);
+  navigate("/upload");
+};
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Rendering a list with .map() and key
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{filtered.map((resume) => (
+  <div key={resume._id} className="dash-resume-item" onClick={() => handleOpenDetails(resume)}>
+    ...
+  </div>
+))}
+
+key={resume._id} is required. React uses it to track which items
+changed, added, or removed between renders.
+_id comes from MongoDB — stable and unique across the whole dataset.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Modal data display (breakdown bars, lists, rewrites)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Each version from the backend has:
+  overallScore, atsScore, breakdown (keywords/format/impact/readability),
+  strengths[], improvements[], keywordGaps[], beforeAfterRewrites[]
+
+Progress bars use inline style with dynamic width:
+  <div style={{ width: `${activeVersion.breakdown?.keywords || 50}%` }}></div>
+
+Optional chaining (?.) guards against undefined values if the
+AI returned incomplete data. Falls back to 50% as a safe default.
+
+Before/After rewrites grid:
+  {activeVersion.beforeAfterRewrites?.map((rewrite, idx) => (
+    <div key={idx} style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <p style={{ textDecoration: "line-through" }}>{rewrite.before}</p>
+      <p>{rewrite.after}</p>
+    </div>
+  ))}
+
+"Upload New Version" button in the modal navigates to:
+  /upload?resumeId={selectedResume._id}
+UploadResume reads this query param to know it's a version upload.

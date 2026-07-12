@@ -1,0 +1,87 @@
+================================================================
+  MERN STACK OVERVIEW — Resume Roaster Backend
+================================================================
+
+MERN = MongoDB + Express + React + Node.js
+
+This project uses the full MERN stack:
+  MongoDB   → database (stores users and resumes)
+  Express   → web framework (handles routes and middleware)
+  React     → frontend (see /Notes/Frontend/)
+  Node.js   → runtime (runs the backend JavaScript)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW THE PIECES FIT TOGETHER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  React Frontend (Vite, port 5173)
+       │
+       │  HTTP requests (fetch with JWT)
+       ▼
+  Express Backend (Node.js, port 5001)
+       │
+       │  Mongoose queries
+       ▼
+  MongoDB (local or Atlas)
+
+The frontend and backend are completely separate processes.
+CORS is configured on the backend to allow requests from port 5173.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKEND FOLDER STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+backend/
+├── server.js            ← entry point, Express app setup
+├── config/
+│   └── db.js            ← MongoDB connection via Mongoose
+├── models/
+│   ├── User.js          ← User schema (name, email, hashed password)
+│   └── Resume.js        ← Resume schema (versions array with AI data)
+├── controllers/
+│   ├── authController.js   ← signup, login, getProfile functions
+│   └── resumeController.js ← upload, addVersion, getAll, getById, delete
+├── middleware/
+│   └── authMiddleware.js   ← protect() — JWT verification
+├── routes/
+│   ├── authRoutes.js    ← /api/auth routes
+│   └── resumeRoutes.js  ← /api/resumes routes + multer setup
+└── uploads/             ← saved resume files (PDF/DOC/DOCX)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+API ROUTES SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Auth routes (public):
+  POST  /api/auth/signup     → register new user
+  POST  /api/auth/login      → login, returns JWT
+
+Auth routes (protected):
+  GET   /api/auth/profile    → get logged-in user data
+
+Resume routes (all protected):
+  GET   /api/resumes         → list all user's resumes
+  POST  /api/resumes         → upload new resume (multipart/form-data)
+  GET   /api/resumes/:id     → get one resume with all versions
+  DELETE /api/resumes/:id    → delete resume + files from disk
+  POST  /api/resumes/:id/version → add a new version to existing resume
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PACKAGES USED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  express      → HTTP server and routing
+  mongoose     → MongoDB ODM (Object Document Mapper)
+  bcryptjs     → password hashing
+  jsonwebtoken → JWT creation and verification
+  cors         → allow cross-origin requests from the frontend
+  dotenv       → load environment variables from .env file
+  multer       → handle multipart/form-data (file uploads)
+  pdf-parse    → extract raw text from uploaded PDFs
+
+"type": "module" in package.json means ES module syntax is used
+throughout (import/export instead of require/module.exports).

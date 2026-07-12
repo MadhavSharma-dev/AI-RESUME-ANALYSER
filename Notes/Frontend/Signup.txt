@@ -1,0 +1,120 @@
+================================================================
+  SIGNUP.JSX — Concepts & Logic Breakdown
+================================================================
+
+FILE: frontend/src/components/Signup.jsx
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT THIS COMPONENT DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Two-column layout (same structure as Login.jsx):
+  Left  → signup form (name + email + password)
+  Right → marketing pane with auto-rotating slideshow (same cards as Login)
+
+Calls api.signup() to POST the new user to the backend.
+On success, plays exit animation then redirects to /login.
+Signup does NOT log the user in — they must login separately.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: State
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const [name,       setName]       = useState("");
+const [email,      setEmail]      = useState("");
+const [password,   setPassword]   = useState("");
+const [isExiting,  setIsExiting]  = useState(false);
+const [activeSet,  setActiveSet]  = useState(0);
+
+  name / email / password → controlled form fields (3 fields, no phone/confirm)
+  isExiting               → triggers CSS exit animation before navigating
+  activeSet               → controls which slideshow card set is visible
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: useEffect for Slideshow Auto-rotate
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+useEffect(() => {
+  const timer = setInterval(() => {
+    setActiveSet((prev) => (prev === 0 ? 1 : 0));
+  }, 4500);
+  return () => clearInterval(timer);  // cleanup to prevent memory leak
+}, []);
+
+Exact same pattern as Login.jsx. Toggles between card set 0/1 every 4.5s.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: handleSignup — API call flow
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const handleSignup = (e) => {
+  e.preventDefault();
+  if (!name || !email || !password) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  signup(name, email, password)
+    .then(() => {
+      setIsExiting(true);
+      setTimeout(() => navigate("/login"), 650);
+    })
+    .catch((err) => {
+      alert(err.message || "Registration failed. Please try again.");
+    });
+};
+
+signup() from api.js calls POST /api/auth/signup.
+The backend creates the user and returns the new user object + token,
+but we ignore the response here — just redirect to /login on success.
+The catch block surfaces backend error messages (e.g. "User already
+exists with this email").
+
+Early return pattern:
+  !name || !email || !password → true if any field is empty
+  Returns early to prevent the API call from firing.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Controlled Components
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Every input follows this pattern:
+  <input
+    value={name}
+    onChange={(e) => setName(e.target.value)}
+  />
+
+The flow every time the user types:
+  1. User types a character
+  2. onChange fires with event object e
+  3. e.target.value = current input string
+  4. setState() is called
+  5. React re-renders, input reflects new value
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: htmlFor on labels (accessibility)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<label className="auth-label" htmlFor="signup-name">Full name</label>
+<input id="signup-name" ... />
+
+htmlFor links the label to the input by matching id.
+Clicking the label focuses the input — required for accessibility.
+In JSX: htmlFor (not for, which is a reserved JS keyword).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Link for navigation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<Link to="/login">Sign in</Link>
+
+Use Link for all internal navigation. Never <a href> for internal routes.
+
+Note: Navbar is hidden on /signup (Navbar returns null for that path).

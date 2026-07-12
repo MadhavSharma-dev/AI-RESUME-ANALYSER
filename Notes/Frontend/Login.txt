@@ -1,0 +1,143 @@
+================================================================
+  LOGIN.JSX — Concepts & Logic Breakdown
+================================================================
+
+FILE: frontend/src/components/Login.jsx
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT THIS COMPONENT DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Two-column layout:
+  Left  → login form (email + password)
+  Right → marketing pane with an auto-rotating slideshow
+
+Validates that both fields are filled.
+Calls api.login() to POST credentials to the backend.
+Stores the returned JWT in localStorage.
+Calls handleLogin({ name, email }) to set auth state in App.jsx.
+Plays an exit animation, then redirects to /dashboard.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROPS RECEIVED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function Login({ handleLogin }) { ... }
+
+handleLogin is passed from App.jsx.
+When called with real user data from the backend, it updates
+isLoggedIn and user state in App.jsx.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: State
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const [email,      setEmail]      = useState("");
+const [password,   setPassword]   = useState("");
+const [isExiting,  setIsExiting]  = useState(false);
+const [activeSet,  setActiveSet]  = useState(0);
+
+  email / password  → controlled form fields
+  isExiting         → triggers CSS exit animation before navigation
+  activeSet         → 0 or 1, controls which slideshow card set is visible
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: useEffect for Slideshow Auto-rotate
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+useEffect(() => {
+  const timer = setInterval(() => {
+    setActiveSet((prev) => (prev === 0 ? 1 : 0));
+  }, 4500);
+  return () => clearInterval(timer);  // cleanup on unmount
+}, []);
+
+setInterval fires every 4.5s to toggle between card set 0 and 1.
+The return cleanup function stops the interval when the component
+unmounts (e.g., user navigates away). Without it you'd have a
+memory leak — the interval keeps firing even after the component
+is gone.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: handleLoginClick — API call flow
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const handleLoginClick = (e) => {
+  e.preventDefault();  // stops form from doing a full page submit
+  if (!email || !password) { alert("Please fill all fields"); return; }
+
+  login(email, password)
+    .then((data) => {
+      localStorage.setItem("token", data.token);  // store JWT
+      setIsExiting(true);                          // trigger exit animation
+      setTimeout(() => {
+        handleLogin({ name: data.name, email: data.email });  // update App state
+        navigate("/dashboard");
+      }, 650);  // wait for animation to finish
+    })
+    .catch((err) => {
+      alert(err.message || "Login failed. Please verify your credentials.");
+    });
+};
+
+login() from api.js calls POST /api/auth/login.
+The backend returns { _id, name, email, token }.
+JWT is stored in localStorage so App.jsx can restore the session
+on the next page load via getProfile().
+Animation plays for 650ms, then state updates + navigation happen.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Controlled inputs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<input
+  type="email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+/>
+<input
+  type="password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+/>
+
+value={state}  → React controls what the input shows
+onChange       → updates state on every keystroke
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Right Pane Slideshow (two sets of 3 cards)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Set 0 (activeSet === 0): ATS metrics cards
+  - Version History progress chart
+  - Critical Issues ATS check
+  - AI Rewrite bullet example
+
+Set 1 (activeSet === 1): Candidate / recruiter review cards
+  - Marcus K. — Software Engineer
+  - Sarah L.  — Talent Acquisition
+  - David W.  — VP of Engineering
+
+Visibility is controlled by:
+  style={{ display: activeSet === 0 ? "block" : "none" }}
+
+Cards toggle every 4.5 seconds via the useEffect interval.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Link for navigation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<Link to="/signup">Sign up</Link>
+
+React Router Link = client-side navigation, no page reload.
+Never use <a href="/signup"> for internal routes in React.
+
+Note: Navbar is hidden on /login (Navbar returns null for that path).

@@ -1,0 +1,129 @@
+================================================================
+  SERVER.JS — Concepts & Logic Breakdown
+================================================================
+
+FILE: backend/server.js
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT THIS FILE DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry point for the backend. Does four things:
+  1. Loads environment variables (.env)
+  2. Connects to MongoDB
+  3. Sets up Express middleware
+  4. Mounts routes and starts listening on a port
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Environment Variables
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+dotenv.config();
+
+Reads the .env file and puts its key/value pairs into process.env.
+All secret values (MONGO_URI, JWT_SECRET, GEMINI_API_KEY) should
+live there — never hardcoded in source files.
+
+Access them via: process.env.PORT, process.env.JWT_SECRET, etc.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: CORS Middleware
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",  // Vite dev server
+    credentials: true
+  })
+);
+
+Browsers block cross-origin requests by default (CORS policy).
+This tells Express to add the correct headers so the React
+frontend on port 5173 can talk to the backend on port 5001.
+
+origin: specifies which domain is allowed.
+credentials: true allows cookies/auth headers to be sent.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Body Parser Middleware
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+express.json() → parses incoming JSON bodies (e.g. login, signup)
+  Without this, req.body would be undefined for JSON requests.
+
+express.urlencoded() → parses URL-encoded form bodies.
+  extended: true → uses the qs library for richer parsing.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Static File Serving
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.use("/uploads", express.static("uploads"));
+
+Makes files in the uploads/ folder accessible at /uploads/<filename>.
+So a file saved as uploads/1234567890-resume.pdf would be accessible
+at http://localhost:5001/uploads/1234567890-resume.pdf.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Route Mounting
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.use("/api/auth",    authRoutes);
+app.use("/api/resumes", resumeRoutes);
+
+Delegates all /api/auth/* requests to authRoutes.js
+Delegates all /api/resumes/* requests to resumeRoutes.js
+
+This keeps server.js clean — it only mounts routes, it doesn't
+define them.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Global Error Handler
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.use((err, req, res, next) => {
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  res.status(statusCode).json({
+    message: err.message,
+    stack: process.env.NODE_ENV === "production" ? null : err.stack
+  });
+});
+
+Express identifies a 4-argument middleware as an error handler.
+It catches errors thrown or passed via next(err) from any route.
+Stack trace is hidden in production for security.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Ensure uploads Directory Exists
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
+
+Multer tries to save files to uploads/ — if the folder doesn't
+exist it will crash. This guard creates it on startup if needed.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Starting the Server
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`[Server] running on port ${PORT}`);
+});
+
+process.env.PORT → uses the environment variable if set (e.g. on Heroku)
+|| 5001          → falls back to 5001 in local development

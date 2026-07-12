@@ -1,0 +1,152 @@
+================================================================
+  DB.JS + MODELS — Concepts & Logic Breakdown
+================================================================
+
+FILES:
+  backend/config/db.js
+  backend/models/User.js
+  backend/models/Resume.js
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DB.JS — MongoDB Connection
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const connectDB = async () => {
+  try {
+    const mongoURI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/resume_roaster";
+    const conn = await mongoose.connect(mongoURI);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error(`MongoDB Connection Error: ${error.message}`);
+    process.exit(1);  // crash the server if DB fails — can't run without it
+  }
+};
+
+export default connectDB;
+
+mongoose.connect() returns a promise.
+process.exit(1) means "exit with error code" — signals the OS
+that the process failed.
+Defaults to local MongoDB if MONGO_URI is not set in .env.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Mongoose Schema
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A Schema defines the shape of documents in a MongoDB collection.
+It specifies field names, types, validation rules, and defaults.
+
+const userSchema = new mongoose.Schema({
+  name:     { type: String, required: true },
+  email:    { type: String, required: true, unique: true, lowercase: true },
+  password: { type: String, required: true }
+}, { timestamps: true });
+
+{ timestamps: true } → Mongoose automatically adds:
+  createdAt: Date  (when document was first created)
+  updatedAt: Date  (updated every time the document is saved)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Mongoose Model
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const User = mongoose.model("User", userSchema);
+export default User;
+
+A Model is a constructor compiled from a Schema.
+It gives you methods to interact with the "users" collection:
+  User.create()          → insert a new document
+  User.findOne({ email })→ find one document
+  User.findById(id)      → find by _id
+  User.findByIdAndDelete → find and delete atomically
+
+Mongoose automatically pluralizes the model name "User" → "users"
+collection in MongoDB.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+USER MODEL — Password Hashing (Pre-save Hook)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();  // skip if password hasn't changed
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+A pre-save middleware (hook) runs before .save() writes to MongoDB.
+this → the document being saved.
+
+bcrypt.genSalt(10) → generates a random salt (10 = cost factor).
+bcrypt.hash(password, salt) → hashes the password with the salt.
+
+Why check isModified?  When updating a user's name, we don't want
+to re-hash an already-hashed password. This guard prevents that.
+
+NEVER store plain text passwords. bcrypt is the standard.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+USER MODEL — matchPassword Instance Method
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+Instance methods are available on every User document.
+bcrypt.compare(plain, hashed) returns true if they match.
+Used in loginUser controller:
+  if (user && (await user.matchPassword(password))) { ... }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESUME MODEL — Nested Schema (versions array)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The Resume document embeds an array of version sub-documents.
+Each version holds all the AI analysis data for that upload.
+
+const versionSchema = new mongoose.Schema({
+  versionNumber: { type: Number, required: true },
+  filePath:      { type: String, required: true },  // path on disk
+  fileName:      { type: String, required: true },
+  targetRole:    { type: String, default: "General" },
+  overallScore:  { type: Number, default: 0 },
+  atsScore:      { type: Number, default: 0 },
+  breakdown: {
+    keywords:    { type: Number, default: 0 },
+    format:      { type: Number, default: 0 },
+    impact:      { type: Number, default: 0 },
+    readability: { type: Number, default: 0 }
+  },
+  strengths:          [{ type: String }],
+  improvements:       [{ type: String }],
+  keywordGaps:        [{ type: String }],
+  toneAssessment:     { type: String, default: "" },
+  beforeAfterRewrites: [{ before: String, after: String }],
+  createdAt:          { type: Date, default: Date.now }
+});
+
+const resumeSchema = new mongoose.Schema({
+  userId:   { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  name:     { type: String, required: true },  // original filename
+  versions: [versionSchema]
+}, { timestamps: true });
+
+userId is a reference (foreign key) to the User collection.
+index: true on userId makes finding a user's resumes fast.
+versions: [versionSchema] embeds all versions inside one document
+— no need for a separate Versions collection.
+
+Embedding vs referencing:
+  Embedded (used here) → all version data stored inside the Resume doc.
+  Fast to read (one query).
+  Referenced → separate collection, JOIN-like queries (populate).
+  Better for very large or shared sub-documents.

@@ -74,3 +74,9 @@ export const removeResume = (id) =>
   apiFetch(`/resumes/${id}`, {
     method: "DELETE"
   });
+
+export const fetchActivity = () =>
+  apiFetch("/activity");
+
+export const backfillActivity = () =>
+  apiFetch("/activity/backfill", { method: "POST" });

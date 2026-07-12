@@ -1,0 +1,227 @@
+.dash-overview-page {
+  flex: 1;
+  padding: 2.5rem 2.5rem 3rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dash-overview-header {
+  margin-bottom: 2rem;
+}
+
+.dash-overview-greeting {
+  font-family: var(--font-display, serif);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.2rem;
+}
+
+.dash-overview-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ── Stats row ── */
+.dash-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dash-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  transition: border-color 0.15s;
+}
+
+.dash-stat-card:hover {
+  border-color: var(--accent);
+}
+
+.dash-stat-value {
+  font-family: var(--font-display, serif);
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dash-stat-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-stat-sub {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Sections ── */
+.dash-overview-section {
+  margin-bottom: 2.25rem;
+}
+
+.dash-overview-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.dash-overview-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+}
+
+.dash-see-all {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.dash-see-all:hover {
+  text-decoration: underline;
+}
+
+/* ── Quick actions ── */
+.dash-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.dash-quick-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dash-quick-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.dash-quick-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.dash-quick-icon--upload { background: rgba(40, 140, 82, 0.1); color: #288c52; }
+.dash-quick-icon--resumes { background: var(--accent-light); color: var(--accent); }
+.dash-quick-icon--history { background: rgba(212, 136, 26, 0.1); color: #d4881a; }
+.dash-quick-icon--analytics { background: rgba(91, 119, 201, 0.1); color: #5b77c9; }
+
+.dash-quick-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dash-quick-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* ── Recent activity ── */
+.dash-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.dash-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+
+.dash-recent-item:last-child {
+  border-bottom: none;
+}
+
+.dash-recent-item:hover {
+  background: var(--bg-primary);
+}
+
+.dash-recent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dash-recent-dot--upload { background: #288c52; }
+.dash-recent-dot--analysis { background: var(--accent); }
+.dash-recent-dot--rewrite { background: #d4881a; }
+
+.dash-recent-text {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-recent-score {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.dash-recent-time {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 50px;
+  text-align: right;
+}
+
+.dash-no-activity {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding: 1rem 0;
+}

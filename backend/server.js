@@ -5,6 +5,7 @@ import fs from "fs";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js";
 
 // Load Environment variables
 dotenv.config();
@@ -35,6 +36,7 @@ app.use("/uploads", express.static("uploads"));
 // Route Mountings
 app.use("/api/auth", authRoutes);
 app.use("/api/resumes", resumeRoutes);
+app.use("/api/activity", activityRoutes);
 
 // Base Ping Route
 app.get("/", (req, res) => {

@@ -1,0 +1,226 @@
+================================================================
+  RESUMES — Routes, Multer & Controller Breakdown
+================================================================
+
+FILES:
+  backend/routes/resumeRoutes.js
+  backend/controllers/resumeController.js
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESUME ROUTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Mounted at /api/resumes in server.js.
+
+router.route("/")
+  .get(protect, getResumes)                        // GET  /api/resumes
+  .post(protect, upload.single("resume"), uploadResume);  // POST /api/resumes
+
+router.route("/:id")
+  .get(protect, getResumeById)                     // GET  /api/resumes/:id
+  .delete(protect, deleteResume);                  // DELETE /api/resumes/:id
+
+router.post("/:id/version", protect, upload.single("resume"), addResumeVersion);
+  // POST /api/resumes/:id/version
+
+Every route runs protect middleware first (JWT check).
+File upload routes also run upload.single("resume") (Multer).
+Middleware order: protect → upload.single → controller
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Multer — File Upload Middleware
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Multer parses multipart/form-data requests (the format browsers
+use when uploading files). Without it, req.file and req.body
+would be undefined for file upload requests.
+
+Storage configuration:
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, "uploads/"),
+    filename: (req, file, cb) => {
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "");
+      cb(null, `${Date.now()}-${safeName}`);
+    }
+  });
+
+  destination → where to save the file on disk
+  filename    → what to name it:
+    Date.now()  → timestamp prefix (ensures uniqueness)
+    safeName    → strips special characters to prevent path traversal attacks
+
+File type validation:
+  const fileFilter = (req, file, cb) => {
+    const filetypes = /pdf|doc|docx/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype) || file.mimetype === "application/octet-stream";
+    if (extname && mimetype) return cb(null, true);
+    else return cb(new Error("Only PDF, DOC, and DOCX files are allowed"));
+  };
+
+Both extension AND MIME type are checked.
+application/octet-stream is a catch-all MIME type some OS use
+for unknown file types — extension check catches these cases.
+
+Multer config:
+  const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 },  // 5MB
+    fileFilter
+  });
+
+After Multer runs, req.file is populated:
+  req.file.path         → where the file was saved on disk
+  req.file.originalname → original filename from the client
+  req.file.mimetype     → MIME type
+  req.file.size         → size in bytes
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: AI Analysis — Gemini + Mock Fallback
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The runAiAnalysis(text, targetRole) function:
+  1. Checks if GEMINI_API_KEY exists in .env
+  2. If yes → calls the Gemini 1.5 Flash API with a structured prompt
+  3. If no  → runs generateMockAnalysis() as a fallback
+
+Gemini call:
+  POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+
+  The prompt instructs Gemini to return raw JSON matching the exact
+  schema the controller expects. No markdown backticks.
+
+  After the call, the response text is cleaned of any markdown
+  code fences that Gemini might add despite the instruction:
+    if (resultText.includes("```json")) {
+      resultText = resultText.split("```json")[1].split("```")[0];
+    }
+
+  Then JSON.parse() turns it into an object.
+
+Mock fallback (generateMockAnalysis):
+  Keyword detection scans the resume text with regex:
+    const hasReact = /react/i.test(text);
+    const hasTypeScript = /typescript|ts/i.test(text);
+
+  Scores are calculated from keyword presence + random variation.
+  Returns the same JSON shape as the real Gemini response so the
+  controller code doesn't need to know which was used.
+
+Expected AI response shape:
+  {
+    overall_score: 86,
+    ats_compatibility: 82,
+    breakdown: { keywords, format, impact, readability },
+    strengths: ["string", ...],
+    improvements: ["string", ...],
+    keyword_gaps: ["string", ...],
+    tone_assessment: "string",
+    before_after_rewrites: [{ before: "string", after: "string" }]
+  }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTROLLER: uploadResume  (POST /api/resumes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export const uploadResume = async (req, res) => {
+  const { targetRole } = req.body;
+  if (!req.file) return res.status(400).json({ message: "Please upload a resume file" });
+
+  // 1. Extract text from PDF
+  let extractedText = "";
+  if (req.file.mimetype === "application/pdf") {
+    const dataBuffer = fs.readFileSync(req.file.path);
+    const pdfData = await pdfParse(dataBuffer);
+    extractedText = pdfData.text;
+  } else {
+    extractedText = `Uploaded document: ${req.file.originalname}. Technical resume profile contents.`;
+  }
+
+  // 2. Run AI analysis
+  const aiFeedback = await runAiAnalysis(extractedText, targetRole || "General");
+
+  // 3. Build the version data object
+  const versionData = {
+    versionNumber: 1,
+    filePath: req.file.path,
+    fileName: req.file.originalname,
+    targetRole: targetRole || "General",
+    overallScore: aiFeedback.overall_score,
+    atsScore: aiFeedback.ats_compatibility,
+    breakdown: { keywords, format, impact, readability },
+    strengths: aiFeedback.strengths || [],
+    improvements: aiFeedback.improvements || [],
+    keywordGaps: aiFeedback.keyword_gaps || [],
+    toneAssessment: aiFeedback.tone_assessment || "",
+    beforeAfterRewrites: aiFeedback.before_after_rewrites || []
+  };
+
+  // 4. Create new Resume document in MongoDB
+  const resume = await Resume.create({
+    userId: req.user._id,
+    name: req.file.originalname,
+    versions: [versionData]
+  });
+
+  return res.status(201).json(resume);
+};
+
+pdf-parse reads the file buffer and returns pdfData.text.
+req.user._id comes from protect middleware.
+The || [] fallbacks handle cases where the AI returned null fields.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTROLLER: addResumeVersion  (POST /api/resumes/:id/version)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Same flow as uploadResume but:
+  1. Finds the existing Resume by req.params.id
+  2. Verifies ownership: resume.userId.toString() !== req.user._id.toString()
+  3. Auto-increments version number: resume.versions.length + 1
+  4. Pushes the new version to resume.versions array
+  5. Calls resume.save() to persist
+
+Why toString() comparison?
+  MongoDB ObjectIds are objects, not strings. Direct === would
+  always be false. .toString() converts both sides to strings.
+
+resume.versions.push(versionData);
+await resume.save();
+
+Mongoose's .save() runs the pre-save hook and writes to MongoDB.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTROLLER: getResumes  (GET /api/resumes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const resumes = await Resume.find({ userId: req.user._id }).sort({ updatedAt: -1 });
+return res.json(resumes);
+
+.find({ userId }) → query: only return this user's documents
+.sort({ updatedAt: -1 }) → newest first (-1 = descending)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTROLLER: deleteResume  (DELETE /api/resumes/:id)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Remove files from disk before deleting the DB record
+resume.versions.forEach((version) => {
+  if (fs.existsSync(version.filePath)) {
+    fs.unlinkSync(version.filePath);
+  }
+});
+
+await Resume.findByIdAndDelete(req.params.id);
+
+Always clean up uploaded files when deleting a resume.
+fs.existsSync() guards against crashing if a file was already removed.
+fs.unlinkSync() deletes the file synchronously.
+findByIdAndDelete() removes the MongoDB document atomically.

@@ -1,6 +1,7 @@
 import fs from "fs";
 import pdfParse from "pdf-parse";
 import Resume from "../models/Resume.js";
+import Activity from "../models/Activity.js";
 
 // Helper: Custom AI Mock Engine checking resume content for keywords
 const generateMockAnalysis = (text, targetRole) => {
@@ -176,6 +177,40 @@ export const uploadResume = async (req, res) => {
       versions: [versionData]
     });
 
+    // Log: upload event (V1 created)
+    await Activity.create({
+      userId: req.user._id,
+      resumeId: resume._id,
+      resumeName: req.file.originalname,
+      type: "upload",
+      versionNumber: 1,
+      targetRole: targetRole || "General"
+    });
+
+    // Log: analysis event
+    await Activity.create({
+      userId: req.user._id,
+      resumeId: resume._id,
+      resumeName: req.file.originalname,
+      type: "analysis",
+      atsScore: aiFeedback.ats_compatibility,
+      overallScore: aiFeedback.overall_score,
+      versionNumber: 1,
+      targetRole: targetRole || "General"
+    });
+
+    // Log: rewrite event (if rewrites were generated)
+    if (aiFeedback.before_after_rewrites && aiFeedback.before_after_rewrites.length > 0) {
+      await Activity.create({
+        userId: req.user._id,
+        resumeId: resume._id,
+        resumeName: req.file.originalname,
+        type: "rewrite",
+        versionNumber: 1,
+        targetRole: targetRole || "General"
+      });
+    }
+
     return res.status(201).json(resume);
   } catch (error) {
     console.error("Upload failed:", error);
@@ -243,6 +278,40 @@ export const addResumeVersion = async (req, res) => {
     resume.versions.push(versionData);
     await resume.save();
 
+    // Log: upload event for new version
+    await Activity.create({
+      userId: req.user._id,
+      resumeId: resume._id,
+      resumeName: resume.name,
+      type: "upload",
+      versionNumber: newVersionNumber,
+      targetRole: targetRole || "General"
+    });
+
+    // Log: analysis event
+    await Activity.create({
+      userId: req.user._id,
+      resumeId: resume._id,
+      resumeName: resume.name,
+      type: "analysis",
+      atsScore: aiFeedback.ats_compatibility,
+      overallScore: aiFeedback.overall_score,
+      versionNumber: newVersionNumber,
+      targetRole: targetRole || "General"
+    });
+
+    // Log: rewrite event (if rewrites generated)
+    if (aiFeedback.before_after_rewrites && aiFeedback.before_after_rewrites.length > 0) {
+      await Activity.create({
+        userId: req.user._id,
+        resumeId: resume._id,
+        resumeName: resume.name,
+        type: "rewrite",
+        versionNumber: newVersionNumber,
+        targetRole: targetRole || "General"
+      });
+    }
+
     return res.status(201).json(resume);
   } catch (error) {
     console.error("Add version failed:", error);
@@ -308,6 +377,10 @@ export const deleteResume = async (req, res) => {
     });
 
     await Resume.findByIdAndDelete(req.params.id);
+
+    // Delete all activity entries for this resume
+    await Activity.deleteMany({ resumeId: req.params.id, userId: req.user._id });
+
     return res.json({ message: "Resume deleted successfully" });
   } catch (error) {
     return res.status(500).json({ message: error.message });

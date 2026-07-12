@@ -1,0 +1,502 @@
+================================================================
+  REACT CONCEPTS MASTER NOTE — Resume Roaster Project
+================================================================
+Every React concept used across this project, explained with
+the actual code from your files.
+================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. JSX  (JavaScript XML)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+JSX lets you write HTML-like syntax inside JavaScript.
+React converts it to real DOM elements behind the scenes.
+
+Rule: Every component must return ONE root element.
+
+Your code (App.jsx):
+  return (
+    <>
+      <Navbar />
+      <Routes> ... </Routes>
+    </>
+  );
+
+The <> </> is a Fragment — a wrapper that renders no extra HTML tag.
+
+JSX rules:
+  - class  → className
+  - for    → htmlFor   (used in your labels e.g. htmlFor="login-email")
+  - All tags must be closed: <br /> not <br>
+  - JavaScript expressions go inside { }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. COMPONENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A component is a JavaScript function that returns JSX.
+All components here are FUNCTIONAL components.
+
+Naming rule:
+  <navbar /> → React treats this as an HTML tag (wrong)
+  <Navbar /> → React treats this as a component (correct)
+
+Your components:
+  Home, Navbar, Login, Signup, Dashboard, UploadResume
+
+Each file ends with: export default ComponentName;
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. PROPS  (Properties)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Props are how a parent passes data DOWN to a child.
+They are read-only inside the child.
+
+Your code (App.jsx passing props):
+  <Navbar isLoggedIn={isLoggedIn} handleLogout={handleLogout} />
+  <Login  handleLogin={handleLogin} />
+  <Dashboard handleLogout={handleLogout} user={user} />
+
+Your code (child receiving props via destructuring):
+  function Navbar({ isLoggedIn, handleLogout }) { ... }
+  function Dashboard({ handleLogout, user })    { ... }
+
+Props can pass strings, numbers, booleans, functions, objects.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. useState HOOK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+useState lets a component remember and update data.
+When state changes, React re-renders the component.
+
+Syntax: const [value, setValue] = useState(initialValue);
+
+State variables across your project:
+  isLoggedIn       → auth status                          (App.jsx)
+  user             → { name, email } of logged-in user    (App.jsx)
+  loading          → session check in-flight flag         (App.jsx)
+  email            → email input value                    (Login, Signup)
+  password         → password input value                 (Login, Signup)
+  name             → full name input value                (Signup.jsx)
+  isExiting        → exit animation trigger               (Login, Signup)
+  activeSet        → slideshow set index (0 or 1)         (Login, Signup)
+  resumes          → array of resume objects              (Dashboard.jsx)
+  search           → search input value                   (Dashboard.jsx)
+  dragOver         → drag-over highlight flag             (Dashboard.jsx)
+  selectedResume   → resume object open in the modal      (Dashboard.jsx)
+  activeVersionNumber → version pill selection            (Dashboard.jsx)
+  selectedFile     → the File object                      (uploadResume.jsx)
+  previewUrl       → blob URL for the PDF iframe          (uploadResume.jsx)
+  targetRole       → target job title input               (uploadResume.jsx)
+  isAnalyzing      → API call in-flight flag              (uploadResume.jsx)
+  loadingPhaseIdx  → index for cycling loading messages   (uploadResume.jsx)
+  uploadStatus     → "success" | "error" | null           (uploadResume.jsx)
+  error            → validation/API error string          (uploadResume.jsx)
+
+IMPORTANT RULE:
+  NEVER do this:  isLoggedIn = true;    ← does NOT trigger re-render
+  ALWAYS do this: setIsLoggedIn(true);  ← triggers re-render ✓
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. useEffect HOOK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+useEffect runs side effects after a render.
+Signature: useEffect(() => { /* effect */ return cleanup; }, [deps]);
+
+Dependency array controls when it runs:
+  []          → once on mount only
+  [someVal]   → on mount + whenever someVal changes
+  (omitted)   → after every render
+
+Your uses:
+
+App.jsx — session restoration on mount:
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      getProfile()
+        .then((profile) => { setIsLoggedIn(true); setUser(...); })
+        .catch(() => localStorage.removeItem("token"))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+Login.jsx / Signup.jsx — slideshow auto-rotate:
+  useEffect(() => {
+    const timer = setInterval(() => setActiveSet(prev => prev === 0 ? 1 : 0), 4500);
+    return () => clearInterval(timer);  // cleanup on unmount
+  }, []);
+
+Dashboard.jsx — fetch resumes on mount:
+  useEffect(() => {
+    fetchResumesList()
+      .then((data) => setResumes(data))
+      .finally(() => setLoading(false));
+  }, []);
+
+uploadResume.jsx — animate loading phases while analyzing:
+  useEffect(() => {
+    let interval;
+    if (isAnalyzing) {
+      interval = setInterval(() => {
+        setLoadingPhaseIdx((prev) => (prev + 1) % LOADING_PHASES.length);
+      }, 1800);
+    } else {
+      setLoadingPhaseIdx(0);
+    }
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);  // re-runs when isAnalyzing changes
+
+Home.jsx — ATS score gauge animation on mount:
+  useEffect(() => {
+    const animateScore = (timestamp) => { /* requestAnimationFrame loop */ };
+    scoreAnimFrame = requestAnimationFrame(animateScore);
+    return () => cancelAnimationFrame(scoreAnimFrame);
+  }, []);
+
+CLEANUP FUNCTIONS:
+  Always return a cleanup to stop intervals/timers when the component
+  unmounts. Without it, the interval keeps running on unmounted components
+  causing memory leaks and stale state updates.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. EVENT HANDLING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+onClick — button click:
+  <button onClick={handleLoginClick}>Sign in</button>
+  <button onClick={() => navigate("/upload")}>Upload</button>
+
+onChange — input typing:
+  <input value={email} onChange={(e) => setEmail(e.target.value)} />
+
+  e              → the event object
+  e.target.value → what the user typed
+
+onChange — file input:
+  <input type="file" onChange={handleFileChange} />
+  const file = event.target.files[0];  // files is a FileList array
+
+e.preventDefault() — stops the browser's default behavior:
+  Used in: form submit (prevents page reload), drag/drop (prevents
+  browser opening the file), Delete button inside a clickable card
+  (uses e.stopPropagation() to prevent the click bubbling up).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. CONTROLLED COMPONENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A controlled component is an input whose value is driven by state.
+
+Your code (every form input):
+  <input
+    value={name}
+    onChange={(e) => setName(e.target.value)}
+  />
+
+Flow: User types → onChange → setState → re-render → input shows new value
+
+This lets you validate before submit, read values anywhere, and reset
+by setting state back to "".
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. CONDITIONAL RENDERING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pattern 1 — Ternary (if/else):
+  {isLoggedIn ? <AccountUI /> : <AuthUI />}
+
+Pattern 2 — && (show or nothing):
+  {error && <p className="upload-error">{error}</p>}
+
+Pattern 3 — Return null (hide the whole component):
+  if (location.pathname === "/login") return null;
+
+Pattern 4 — Navigate redirect (for protected routes):
+  element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />}
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. LIFTING STATE UP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When multiple components need the same data, move state UP to
+their closest common parent.
+
+Your code:
+  isLoggedIn, user, loading live in App.jsx because
+  Navbar and protected routes all need them.
+
+  Login.jsx calls handleLogin({ name, email }) → updates App state
+  → Navbar re-renders → Dashboard greeting shows the real name
+
+Data flows: App → children (via props)
+Updates flow: children → App (via callback props)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+10. useNavigate HOOK  (React Router)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Programmatic navigation without a link click.
+
+Used in: App, Navbar, Login, Signup, Dashboard, UploadResume
+
+Your code (Login.jsx after successful login):
+  navigate("/dashboard");
+
+Your code (Dashboard.jsx after logout):
+  navigate("/login");
+
+Your code (UploadResume after upload):
+  setTimeout(() => navigate("/dashboard"), 1200);
+
+navigate("/path", { replace: true }) → replaces history entry
+  (used in Navigate component for protected routes so back button
+  doesn't return to the protected page)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+11. useLocation HOOK  (React Router)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Returns the current URL location object.
+
+Used in: App.jsx, Navbar.jsx
+
+Your code (Navbar.jsx):
+  const location = useLocation();
+  if (location.pathname === "/login" || location.pathname === "/signup") {
+    return null;  // hide navbar on auth pages
+  }
+  if (location.pathname === "/") {
+    return <FloatingCapsuleNav />;  // different navbar on home page
+  }
+
+Your code (App.jsx):
+  const location = useLocation();
+  // imported to ensure the component has access to routing context
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+12. REACT ROUTER — Routes, Route, Link, Navigate
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BrowserRouter (main.jsx):
+  Wraps the entire app. Enables routing using the browser's
+  History API (real URLs like /login, /dashboard).
+
+Routes + Route (App.jsx):
+  <Routes>
+    <Route path="/"          element={<Home />} />
+    <Route path="/signup"    element={<Signup />} />
+    <Route path="/login"     element={<Login handleLogin={handleLogin} />} />
+    <Route path="/dashboard" element={isLoggedIn ? <Dashboard ... /> : <Navigate to="/login" replace />} />
+    <Route path="/upload"    element={isLoggedIn ? <UploadResume /> : <Navigate to="/login" replace />} />
+  </Routes>
+
+Link:
+  <Link to="/login">Login</Link>
+  Renders as <a> but uses client-side navigation. No full page reload.
+  NEVER use <a href="/login"> for internal navigation in React.
+
+Navigate:
+  <Navigate to="/login" replace />
+  Used inside JSX to immediately redirect.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+13. REACT FRAGMENTS  <>  </>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Return multiple elements without adding a DOM node.
+
+  return (
+    <>
+      <Navbar />
+      <Routes>...</Routes>
+    </>
+  );
+
+Full syntax: <React.Fragment> ... </React.Fragment>
+Short syntax: <> ... </>
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+14. StrictMode
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Development-only. Renders components TWICE to catch side effects.
+Warns about deprecated APIs. No effect in production.
+That's why console.log may appear twice in dev mode.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+15. MODULE IMPORTS / EXPORTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Named imports — { } required:
+  import { useState, useEffect }          from "react";
+  import { Routes, Route, Navigate }      from "react-router-dom";
+  import { useNavigate, Link, useLocation } from "react-router-dom";
+  import { fetchResumesList, removeResume } from "../lib/api";
+
+Default imports — no { } needed:
+  import App          from "./App";
+  import Dashboard    from "./components/Dashboard";
+  import UploadResume from "./components/uploadResume";
+
+CSS imports:
+  import "./App.css";
+
+Default export:
+  export default App;
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16. THE ENTRY POINT — createRoot
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  createRoot(document.getElementById("root")).render(
+    <StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </StrictMode>
+  );
+
+  document.getElementById("root") → finds <div id="root"> in index.html
+  createRoot(...)                  → creates a React root on that node
+  .render(...)                     → mounts your entire app into it
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+17. CONSTANTS OUTSIDE COMPONENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your code (uploadResume.jsx):
+  const ALLOWED_TYPES = ["application/pdf", ...];
+  const LOADING_PHASES = ["Extracting document text layout...", ...];
+
+  function UploadResume() { ... }
+
+Why outside: if defined inside, React recreates these arrays on
+EVERY render. Defining outside means created once, reused always.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+18. DERIVED STATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A value computed from existing state — no useState needed.
+
+Your code (Dashboard.jsx):
+  const filtered = resumes.filter((r) =>
+    r.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const activeVersion = selectedResume?.versions.find(
+    (v) => v.versionNumber === activeVersionNumber
+  ) || selectedResume?.versions[selectedResume.versions.length - 1];
+
+Both are recalculated on every render automatically.
+Rule: if a value can be derived, don't store it in state.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+19. API CALLS WITH PROMISES (.then / .catch)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+All API calls in this project use the api.js helper which returns
+Promises. You handle them with .then() / .catch() / .finally().
+
+Your code (Dashboard.jsx):
+  fetchResumesList()
+    .then((data) => setResumes(data))
+    .catch((err) => console.error(err.message))
+    .finally(() => setLoading(false));
+
+Your code (Login.jsx):
+  login(email, password)
+    .then((data) => {
+      localStorage.setItem("token", data.token);
+      setIsExiting(true);
+      setTimeout(() => { handleLogin(data); navigate("/dashboard"); }, 650);
+    })
+    .catch((err) => alert(err.message || "Login failed."));
+
+The api.js apiFetch helper:
+  - Reads the JWT from localStorage on every request
+  - Attaches Authorization: Bearer <token> header
+  - Does NOT set Content-Type for FormData (multer needs browser to set boundaries)
+  - Throws an Error with the backend's message if response.ok is false
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+20. LOCALSTORAGE FOR JWT PERSISTENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After login:
+  localStorage.setItem("token", data.token);
+
+On app mount (App.jsx):
+  const token = localStorage.getItem("token");  // check if token exists
+
+On logout:
+  localStorage.removeItem("token");
+
+localStorage persists across page refreshes and browser tabs.
+The JWT is verified by calling GET /api/auth/profile on mount —
+if the server rejects it (expired/invalid), the token is removed.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK REFERENCE — Where each concept appears
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Concept                  | File(s)
+-------------------------|------------------------------------------
+JSX                      | Every file
+Components               | Every file
+Props                    | App, Navbar, Login, Signup, Dashboard, UploadResume
+useState                 | App, Login, Signup, Dashboard, UploadResume, Home
+useEffect                | App, Login, Signup, Dashboard, UploadResume, Home
+Event Handling           | Login, Signup, Dashboard, UploadResume, Navbar
+Controlled Inputs        | Login, Signup, UploadResume
+Conditional Rendering    | Navbar, App, Dashboard, UploadResume
+Lifting State Up         | App (owns isLoggedIn, user, loading)
+useNavigate              | Login, Signup, Navbar, Dashboard, UploadResume
+useLocation              | Navbar, App
+React Router             | main, App, Navbar, Login, Signup
+Fragments <>             | App, Navbar
+StrictMode               | main.jsx
+Imports/Exports          | Every file
+createRoot               | main.jsx
+Constants outside        | uploadResume.jsx
+Derived state            | Dashboard (filtered, activeVersion)
+API calls (Promises)     | App, Login, Signup, Dashboard, UploadResume
+localStorage / JWT       | App, Login, Navbar
+Protected Routes         | App (/dashboard, /upload via Navigate)
+return null              | Navbar (/login, /signup paths)
+.map() + key prop        | Dashboard (resume list, version pills)
+Functional setState      | Dashboard (setResumes(prev => ...))
+Optional chaining ?.     | Dashboard, App
+e.stopPropagation()      | Dashboard (delete inside clickable card)
+setTimeout + navigate    | Login, Signup, UploadResume (animation delay)
+URL.createObjectURL()    | uploadResume (PDF preview)
+URLSearchParams          | uploadResume (resumeId query param)
+window.confirm()         | Dashboard (delete confirmation)
+requestAnimationFrame    | Home (score gauge animation)

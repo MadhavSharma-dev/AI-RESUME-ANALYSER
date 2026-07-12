@@ -1,0 +1,152 @@
+================================================================
+  NAVBAR.JSX — Concepts & Logic Breakdown
+================================================================
+
+FILE: frontend/src/components/Navbar.jsx
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT THIS COMPONENT DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Three distinct rendering modes depending on the current route:
+
+  1. /login or /signup  → returns null (completely hidden)
+  2. /                  → renders a floating capsule navbar (Home page style)
+  3. Any other route    → renders the standard dark navbar (Dashboard, Upload)
+
+Conditionally shows auth buttons or dashboard/logout links
+based on the isLoggedIn prop.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROPS RECEIVED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function Navbar({ isLoggedIn, handleLogout }) { ... }
+
+  isLoggedIn   → boolean from App.jsx state
+  handleLogout → clears auth state + token in App.jsx
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: useLocation to detect current path
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const location = useLocation();
+
+// Hide completely on auth pages
+if (location.pathname === "/login" || location.pathname === "/signup") {
+  return null;
+}
+
+// Render floating capsule on home page
+if (location.pathname === "/") {
+  return ( <div className="nav-capsule-container">...</div> );
+}
+
+// Fallback: standard navbar
+return ( <nav className="navbar">...</nav> );
+
+useLocation() returns the current URL location object.
+location.pathname gives the path string e.g. "/", "/login", "/dashboard".
+Returning null from a component renders nothing to the DOM.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: scrollToSection — smooth scroll helper
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const scrollToSection = (id) => {
+  const element = document.getElementById(id);
+  if (element) {
+    element.scrollIntoView({ behavior: "smooth" });
+  }
+};
+
+// Used in the Home page capsule navbar:
+<button onClick={() => scrollToSection("features")}>Features</button>
+<button onClick={() => scrollToSection("how-it-works")}>How it works</button>
+
+Direct DOM access via document.getElementById is fine here because
+it's for a scroll side-effect, not for reading/writing state.
+behavior: "smooth" triggers CSS smooth scrolling.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Capsule Navbar (Home page)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Rendered only when location.pathname === "/":
+
+  Logo → "R" icon + "Resume Roaster" text
+
+  Nav links:
+    Features      → scrollToSection("features")
+    How it works  → scrollToSection("how-it-works")
+    Pricing / Dashboard → if logged in shows Dashboard link, else greyed out
+
+  Actions:
+    Logged out → Sign in (Link to /login), Get started (Link to /signup)
+    Logged in  → Dashboard (Link to /dashboard), Sign out (button → onLogout)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Standard Navbar (Dashboard / other pages)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Rendered for all paths except "/", "/login", "/signup":
+
+  Brand  → "R" icon + "Resume Roaster" as a Link to "/"
+
+  Actions:
+    Logged in  → "My Account" text + Logout button (calls onLogout)
+    Logged out → Login (Link) + Sign Up (Link)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: useNavigate for logout
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const onLogout = () => {
+  handleLogout();     // 1. clears token + state in App.jsx
+  navigate("/login"); // 2. redirects to login page
+};
+
+Always clear state BEFORE navigating. If you navigate first, the
+protected route check might still see the old state for one render.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCEPT: Conditional Rendering (Ternary)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{isLoggedIn ? (
+  <>
+    <Link to="/dashboard" className="btn-capsule">Dashboard</Link>
+    <button onClick={onLogout}>Sign out</button>
+  </>
+) : (
+  <>
+    <Link to="/login" className="btn-signin">Sign in</Link>
+    <Link to="/signup" className="btn-capsule">Get started</Link>
+  </>
+)}
+
+condition ? trueUI : falseUI
+<> </> is a Fragment — groups elements without adding a DOM node.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+App.jsx
+  isLoggedIn ────────────────────────────► Navbar (reads it, controls UI)
+  handleLogout() ─────────────────────────► Navbar (calls on logout button click)
+
+When Navbar calls handleLogout():
+  → localStorage.removeItem("token") runs
+  → setIsLoggedIn(false) runs in App.jsx
+  → App re-renders → Navbar gets isLoggedIn = false as new prop
+  → Navbar shows Sign in / Get started buttons again
