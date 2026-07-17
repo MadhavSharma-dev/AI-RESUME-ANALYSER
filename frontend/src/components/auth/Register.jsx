@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
-import { login } from "../lib/api";
+import { signup } from "../../api/auth";
 
-function Login({ handleLogin }) {
+function Signup({ handleLogin }) {
   const navigate = useNavigate();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isExiting, setIsExiting] = useState(false);
@@ -19,44 +20,76 @@ function Login({ handleLogin }) {
     return () => clearInterval(timer);
   }, []);
 
-  const handleLoginClick = (e) => {
+  const handleSignup = (e) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!name || !email || !password) {
       alert("Please fill all fields");
       return;
     }
 
-    login(email, password)
+    signup(name, email, password)
       .then((data) => {
-        // Store JWT token
-        localStorage.setItem("token", data.token);
-
-        // Trigger the drop down exit animation
+        // Access token stored in memory by api.js — no localStorage
         setIsExiting(true);
-
         setTimeout(() => {
-          handleLogin({ name: data.name, email: data.email });
-          navigate("/dashboard");
+          if (handleLogin) {
+            handleLogin({ name: data.name, email: data.email });
+            navigate("/dashboard");
+          } else {
+            navigate("/login");
+          }
         }, 650);
       })
       .catch((err) => {
-        alert(err.message || "Login failed. Please verify your credentials.");
+        let msg = "Registration failed. Please try again.";
+        if (err.response?.data) {
+          const { message, errors } = err.response.data;
+          msg = message || msg;
+          if (errors && errors.length > 0) {
+            msg += "\n" + errors.map((e) => "- " + e.message).join("\n");
+          }
+        } else if (err.message) {
+          msg = err.message;
+        }
+        alert(msg);
       });
   };
 
   return (
     <div className={`auth-page-container ${isExiting ? "exit-active" : ""}`}>
-      {/* LEFT COLUMN: LOGIN FORM */}
+      {/* LEFT COLUMN: SIGNUP FORM */}
       <div className="auth-left-pane">
         <div className="auth-form-card">
           <div className="auth-logo-icon">R</div>
-          <h1 className="auth-title">Welcome back</h1>
-          <p className="auth-subtitle">Login to continue your analysis.</p>
+          <h1 className="auth-title">Get started</h1>
+          <p className="auth-subtitle">Free to start. No credit card required.</p>
 
-          <form onSubmit={handleLoginClick}>
+          <form onSubmit={handleSignup}>
+            {/* Full Name */}
+            <div className="auth-input-group">
+              <label className="auth-label" htmlFor="signup-name">Full name</label>
+              <div className="auth-input-wrapper">
+                <span className="auth-input-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </span>
+                <input
+                  id="signup-name"
+                  className="auth-input"
+                  type="text"
+                  placeholder="Ada Lovelace"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
             {/* Email */}
             <div className="auth-input-group">
-              <label className="auth-label" htmlFor="login-email">Email</label>
+              <label className="auth-label" htmlFor="signup-email">Email</label>
               <div className="auth-input-wrapper">
                 <span className="auth-input-icon">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -65,7 +98,7 @@ function Login({ handleLogin }) {
                   </svg>
                 </span>
                 <input
-                  id="login-email"
+                  id="signup-email"
                   className="auth-input"
                   type="email"
                   placeholder="you@example.com"
@@ -77,8 +110,8 @@ function Login({ handleLogin }) {
             </div>
 
             {/* Password */}
-            <div className="auth-input-group" style={{ marginBottom: "1.75rem" }}>
-              <label className="auth-label" htmlFor="login-password">Password</label>
+            <div className="auth-input-group">
+              <label className="auth-label" htmlFor="signup-password">Password</label>
               <div className="auth-input-wrapper">
                 <span className="auth-input-icon">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -87,10 +120,10 @@ function Login({ handleLogin }) {
                   </svg>
                 </span>
                 <input
-                  id="login-password"
+                  id="signup-password"
                   className="auth-input"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="At least 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -99,7 +132,7 @@ function Login({ handleLogin }) {
             </div>
 
             <button type="submit" className="btn-auth-submit">
-              Sign in
+              Create account
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -108,12 +141,12 @@ function Login({ handleLogin }) {
           </form>
 
           <p className="auth-footer-nav">
-            Don't have an account? <Link to="/signup">Sign up</Link>
+            Already have an account? <Link to="/login">Sign in</Link>
           </p>
 
           <p className="auth-legal-disclaimer">
-            By logging in, you agree to our terms.<br />
-            We protect your resume data with bank-grade encryption.
+            By creating an account, you agree to our terms.<br />
+            We never share your resume data with third parties.
           </p>
         </div>
       </div>
@@ -244,4 +277,4 @@ function Login({ handleLogin }) {
   );
 }
 
-export default Login;
+export default Signup;

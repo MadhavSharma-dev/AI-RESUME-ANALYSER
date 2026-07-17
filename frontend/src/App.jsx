@@ -1,18 +1,10 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
-import Signup from "./components/Signup";
-import Login from "./components/Login";
-import "./App.css";
-import Dashboard from "./components/Dashboard";
-import UploadResume from "./components/uploadResume";
-import Home from "./components/Home";
-import History from "./components/History";
-import Analytics from "./components/Analytics";
-import Settings from "./components/Settings";
-import Resumes from "./components/Resumes";
-import { getProfile } from "./lib/api";
+import Navbar from "./components/layout/Navbar";
+import Sidebar from "./components/layout/Sidebar";
+import { AppRoutes } from "./routes";
+import { getProfile, refreshSession, logout as apiLogout } from "./api/auth";
+const clearAccessToken = () => {};
 
 const APP_SHELL_PATHS = ["/dashboard", "/resumes", "/history", "/analytics", "/settings", "/upload"];
 
@@ -31,22 +23,26 @@ function App() {
 
   const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
 
+  // ─── Session Restore via httpOnly Cookie ──────────────────────
+  // On mount, attempt to refresh the access token using the httpOnly
+  // refresh cookie. If successful, fetch the user profile. If not,
+  // the user needs to log in again. No localStorage token involved.
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      getProfile()
-        .then((profile) => {
-          setIsLoggedIn(true);
-          setUser({ name: profile.name, email: profile.email });
-        })
-        .catch((err) => {
-          console.error("Profile check failed:", err.message);
-          localStorage.removeItem("token");
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    const restoreSession = async () => {
+      try {
+        await refreshSession();
+        const profile = await getProfile();
+        setIsLoggedIn(true);
+        setUser({ name: profile.name, email: profile.email });
+      } catch {
+        // No valid session — user must log in
+        clearAccessToken();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
   }, []);
 
   const handleLogin = (userData) => {
@@ -54,8 +50,13 @@ function App() {
     setUser({ name: userData.name, email: userData.email });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      await apiLogout();
+    } catch {
+      // Ensure client-side logout even if API call fails
+    }
+    clearAccessToken();
     setIsLoggedIn(false);
     setUser({ name: "" });
   };
@@ -75,29 +76,14 @@ function App() {
       {isLoggedIn && useAppShell ? (
         <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-primary)" }}>
           <Sidebar handleLogout={handleLogout} user={user} theme={theme} toggleTheme={toggleTheme} />
-          <div style={{ marginLeft: "60px", flex: 1, display: "flex", flexDirection: "column" }}>
-            <Routes>
-              <Route path="/dashboard" element={<Dashboard handleLogout={handleLogout} user={user} />} />
-              <Route path="/resumes" element={<Resumes user={user} />} />
-              <Route path="/history" element={<History user={user} />} />
-              <Route path="/analytics" element={<Analytics user={user} />} />
-              <Route path="/settings" element={<Settings user={user} />} />
-              <Route path="/upload" element={<UploadResume />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
+          <div style={{ marginLeft: "120px", flex: 1, display: "flex", flexDirection: "column" }}>
+              <AppRoutes isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} user={user} />
           </div>
         </div>
       ) : (
         <>
           <Navbar isLoggedIn={isLoggedIn} handleLogout={handleLogout} />
-          <Routes>
-            <Route path="/" element={<Home isLoggedIn={isLoggedIn} handleLogout={handleLogout} />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login handleLogin={handleLogin} />} />
-            <Route path="/dashboard" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
-            <Route path="/history" element={isLoggedIn ? <Navigate to="/history" replace /> : <Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AppRoutes isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} user={user} />
         </>
       )}
     </>

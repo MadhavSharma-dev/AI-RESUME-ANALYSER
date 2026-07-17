@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import "../App.css";
-import "./Home.css"; // Ensure floating capsule styling is loaded
+import "../../App.css";
+import "../landing/Landing.css"; // Ensure floating capsule styling is loaded
 
 function Navbar({ isLoggedIn, handleLogout }) {
   const navigate = useNavigate();

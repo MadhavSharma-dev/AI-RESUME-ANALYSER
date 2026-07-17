@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Auth.css";
-import { signup } from "../lib/api";
+import { login } from "../../api/auth";
 
-function Signup() {
+function Login({ handleLogin }) {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isExiting, setIsExiting] = useState(false);
@@ -20,61 +19,53 @@ function Signup() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleSignup = (e) => {
+  const handleLoginClick = (e) => {
     e.preventDefault();
-    if (!name || !email || !password) {
+    if (!email || !password) {
       alert("Please fill all fields");
       return;
     }
 
-    signup(name, email, password)
-      .then(() => {
+    login(email, password)
+      .then((data) => {
+        // Access token stored in memory by api.js — no localStorage
+
         // Trigger the drop down exit animation
         setIsExiting(true);
+
         setTimeout(() => {
-          navigate("/login");
+          handleLogin({ name: data.name, email: data.email });
+          navigate("/dashboard");
         }, 650);
       })
       .catch((err) => {
-        alert(err.message || "Registration failed. Please try again.");
+        let msg = "Login failed. Please verify your credentials.";
+        if (err.response?.data) {
+          const { message, errors } = err.response.data;
+          msg = message || msg;
+          if (errors && errors.length > 0) {
+            msg += "\n" + errors.map((e) => "- " + e.message).join("\n");
+          }
+        } else if (err.message) {
+          msg = err.message;
+        }
+        alert(msg);
       });
   };
 
   return (
     <div className={`auth-page-container ${isExiting ? "exit-active" : ""}`}>
-      {/* LEFT COLUMN: SIGNUP FORM */}
+      {/* LEFT COLUMN: LOGIN FORM */}
       <div className="auth-left-pane">
         <div className="auth-form-card">
           <div className="auth-logo-icon">R</div>
-          <h1 className="auth-title">Get started</h1>
-          <p className="auth-subtitle">Free to start. No credit card required.</p>
+          <h1 className="auth-title">Welcome back</h1>
+          <p className="auth-subtitle">Login to continue your analysis.</p>
 
-          <form onSubmit={handleSignup}>
-            {/* Full Name */}
-            <div className="auth-input-group">
-              <label className="auth-label" htmlFor="signup-name">Full name</label>
-              <div className="auth-input-wrapper">
-                <span className="auth-input-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                </span>
-                <input
-                  id="signup-name"
-                  className="auth-input"
-                  type="text"
-                  placeholder="Ada Lovelace"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
+          <form onSubmit={handleLoginClick}>
             {/* Email */}
             <div className="auth-input-group">
-              <label className="auth-label" htmlFor="signup-email">Email</label>
+              <label className="auth-label" htmlFor="login-email">Email</label>
               <div className="auth-input-wrapper">
                 <span className="auth-input-icon">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -83,7 +74,7 @@ function Signup() {
                   </svg>
                 </span>
                 <input
-                  id="signup-email"
+                  id="login-email"
                   className="auth-input"
                   type="email"
                   placeholder="you@example.com"
@@ -95,8 +86,8 @@ function Signup() {
             </div>
 
             {/* Password */}
-            <div className="auth-input-group">
-              <label className="auth-label" htmlFor="signup-password">Password</label>
+            <div className="auth-input-group" style={{ marginBottom: "1.75rem" }}>
+              <label className="auth-label" htmlFor="login-password">Password</label>
               <div className="auth-input-wrapper">
                 <span className="auth-input-icon">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -105,10 +96,10 @@ function Signup() {
                   </svg>
                 </span>
                 <input
-                  id="signup-password"
+                  id="login-password"
                   className="auth-input"
                   type="password"
-                  placeholder="At least 8 characters"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -117,7 +108,7 @@ function Signup() {
             </div>
 
             <button type="submit" className="btn-auth-submit">
-              Create account
+              Sign in
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -126,12 +117,12 @@ function Signup() {
           </form>
 
           <p className="auth-footer-nav">
-            Already have an account? <Link to="/login">Sign in</Link>
+            Don't have an account? <Link to="/signup">Sign up</Link>
           </p>
 
           <p className="auth-legal-disclaimer">
-            By creating an account, you agree to our terms.<br />
-            We never share your resume data with third parties.
+            By logging in, you agree to our terms.<br />
+            We protect your resume data with bank-grade encryption.
           </p>
         </div>
       </div>
@@ -262,4 +253,4 @@ function Signup() {
   );
 }
 
-export default Signup;
+export default Login;

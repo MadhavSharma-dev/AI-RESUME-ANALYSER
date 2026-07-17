@@ -6,38 +6,36 @@ import Resume from "../models/Resume.js";
 // @access  Private
 export const getActivity = async (req, res) => {
   try {
-    const activities = await Activity.find({ userId: req.user._id })
+    const activities = await Activity.find({ userId: req.userId })
       .sort({ createdAt: -1 })
       .limit(200);
 
     return res.json(activities);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "Failed to fetch activity" });
   }
 };
 
-// @desc    Backfill activity from existing resumes (safe to call multiple times — skips already-logged)
+// @desc    Backfill activity from existing resumes
 // @route   POST /api/activity/backfill
 // @access  Private
 export const backfillActivity = async (req, res) => {
   try {
-    const resumes = await Resume.find({ userId: req.user._id });
+    const resumes = await Resume.find({ userId: req.userId });
     let created = 0;
 
     for (const resume of resumes) {
       for (const version of resume.versions) {
-        // Check if activity already exists for this resume+version to avoid duplicates
         const existing = await Activity.findOne({
-          userId: req.user._id,
+          userId: req.userId,
           resumeId: resume._id,
           type: "upload",
           versionNumber: version.versionNumber
         });
 
         if (!existing) {
-          // Upload event
           await Activity.create({
-            userId: req.user._id,
+            userId: req.userId,
             resumeId: resume._id,
             resumeName: resume.name,
             type: "upload",
@@ -47,9 +45,8 @@ export const backfillActivity = async (req, res) => {
           });
           created++;
 
-          // Analysis event
           await Activity.create({
-            userId: req.user._id,
+            userId: req.userId,
             resumeId: resume._id,
             resumeName: resume.name,
             type: "analysis",
@@ -61,10 +58,9 @@ export const backfillActivity = async (req, res) => {
           });
           created++;
 
-          // Rewrite event (if rewrites exist)
           if (version.beforeAfterRewrites && version.beforeAfterRewrites.length > 0) {
             await Activity.create({
-              userId: req.user._id,
+              userId: req.userId,
               resumeId: resume._id,
               resumeName: resume.name,
               type: "rewrite",
@@ -80,6 +76,6 @@ export const backfillActivity = async (req, res) => {
 
     return res.json({ message: `Backfill complete. ${created} activities created.` });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "Failed to backfill activity" });
   }
 };

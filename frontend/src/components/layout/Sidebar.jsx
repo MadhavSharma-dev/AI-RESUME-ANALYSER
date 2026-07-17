@@ -1,5 +1,9 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { sidebarLinkHover } from "../../lib/motion";
 import "./Sidebar.css";
+
+const MotionNavLink = motion(NavLink);
 
 const NAV_ITEMS = [
   {
@@ -69,24 +73,27 @@ function Sidebar({ handleLogout, user, theme, toggleTheme }) {
       {/* Nav links */}
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item) => (
-          <NavLink
+          <MotionNavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) => `sidebar-nav-item ${isActive ? "active" : ""}`}
             title={item.label}
+            whileHover={sidebarLinkHover}
           >
             {item.icon}
-          </NavLink>
+          </MotionNavLink>
         ))}
       </nav>
 
       {/* Bottom: theme toggle + settings + avatar */}
       <div className="sidebar-bottom">
         {/* Theme toggle */}
-        <button
+        <motion.button
           className="sidebar-nav-item"
           title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
           onClick={toggleTheme}
+          whileHover={sidebarLinkHover}
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}
         >
           {theme === "light" ? (
             // Moon icon — click to go dark
@@ -107,24 +114,31 @@ function Sidebar({ handleLogout, user, theme, toggleTheme }) {
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
             </svg>
           )}
-        </button>
+        </motion.button>
 
         {/* Settings */}
-        <NavLink
+        <MotionNavLink
           to="/settings"
           className={({ isActive }) => `sidebar-nav-item ${isActive ? "active" : ""}`}
           title="Settings"
+          whileHover={sidebarLinkHover}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
-        </NavLink>
+        </MotionNavLink>
 
         {/* Avatar / logout */}
-        <button className="sidebar-avatar" title={`${user?.name || "Account"} — click to logout`} onClick={onLogout}>
+        <motion.button 
+          className="sidebar-avatar" 
+          title={`${user?.name || "Account"} — click to logout`} 
+          onClick={onLogout}
+          whileHover={{ scale: 1.08 }}
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}
+        >
           {initials}
-        </button>
+        </motion.button>
       </div>
     </aside>
   );

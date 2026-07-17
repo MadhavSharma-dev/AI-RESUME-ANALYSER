@@ -1,7 +1,9 @@
 import express from "express";
-import multer from "multer";
-import path from "path";
-import protect from "../middleware/authMiddleware.js";
+import { z } from "zod";
+import requireAuth from "../middleware/authMiddleware.js";
+import upload, { verifyMagicBytes } from "../middleware/upload.js";
+import { uploadLimiter } from "../middleware/rateLimiter.js";
+import validate from "../middleware/validate.js";
 import {
   uploadResume,
   addResumeVersion,
@@ -12,48 +14,52 @@ import {
 
 const router = express.Router();
 
-// Multer storage engine configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    // Sanitize filename to avoid folder escaping
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "");
-    cb(null, `${Date.now()}-${safeName}`);
-  }
+// ─── Validation Schemas ────────────────────────────────────────────
+
+const idSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid resume ID format")
+  })
 });
 
-// Validate file type
-const fileFilter = (req, file, cb) => {
-  const filetypes = /pdf|doc|docx/;
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype) || file.mimetype === "application/octet-stream";
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    return cb(new Error("Only PDF, DOC, and DOCX files are allowed"));
-  }
-};
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter
+const uploadSchema = z.object({
+  body: z.object({
+    targetRole: z.string().max(100).optional().or(z.literal(""))
+  })
 });
 
-// Mount routes (all protected by JWT authMiddleware)
-router
-  .route("/")
-  .get(protect, getResumes)
-  .post(protect, upload.single("resume"), uploadResume);
+// ─── Routes ────────────────────────────────────────────────────────
 
-router
-  .route("/:id")
-  .get(protect, getResumeById)
-  .delete(protect, deleteResume);
+// List all resumes for the authenticated user
+router.get("/", requireAuth, getResumes);
 
-router.post("/:id/version", protect, upload.single("resume"), addResumeVersion);
+// Upload new resume (multipart) — rate-limited, magic-byte verified, validated body
+router.post(
+  "/upload",
+  requireAuth,
+  uploadLimiter,
+  upload.single("resume"),
+  verifyMagicBytes,
+  validate(uploadSchema),
+  uploadResume
+);
+
+// Get specific resume by ID — validated ID
+router.get("/:id", requireAuth, validate(idSchema), getResumeById);
+
+// Delete resume by ID — validated ID
+router.delete("/:id", requireAuth, validate(idSchema), deleteResume);
+
+// Upload new version of existing resume — validated ID and body
+router.post(
+  "/:id/version",
+  requireAuth,
+  uploadLimiter,
+  validate(idSchema),
+  upload.single("resume"),
+  verifyMagicBytes,
+  validate(uploadSchema),
+  addResumeVersion
+);
 
 export default router;

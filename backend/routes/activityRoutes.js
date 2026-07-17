@@ -1,10 +1,10 @@
 import express from "express";
-import protect from "../middleware/authMiddleware.js";
+import requireAuth from "../middleware/authMiddleware.js";
 import { getActivity, backfillActivity } from "../controllers/activityController.js";
 
 const router = express.Router();
 
-router.get("/", protect, getActivity);
-router.post("/backfill", protect, backfillActivity);
+router.get("/", requireAuth, getActivity);
+router.post("/backfill", requireAuth, backfillActivity);
 
 export default router;

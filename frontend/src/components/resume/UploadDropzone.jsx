@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../App.css";
-import { uploadNewResume, uploadResumeVersion } from "../lib/api";
+import "../../App.css";
+import { uploadNewResume, uploadResumeVersion } from "../../api/resumes";
 
 const ALLOWED_TYPES = [
   "application/pdf",

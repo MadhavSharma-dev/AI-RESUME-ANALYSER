@@ -1,58 +1,74 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import fs from "fs";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
+import errorHandler from "./middleware/errorHandler.js";
+import { generalLimiter } from "./middleware/rateLimiter.js";
+import logger from "./utils/logger.js";
 
-// Load Environment variables
+// ─── Load Environment ──────────────────────────────────────────────
 dotenv.config();
 
-// Connect to MongoDB
+// Startup safety checks — refuse to start if critical env vars are missing
+if (!process.env.JWT_SECRET) {
+  logger.fatal("JWT_SECRET is not set. Refusing to start.");
+  process.exit(1);
+}
+if (!process.env.JWT_REFRESH_SECRET) {
+  logger.fatal("JWT_REFRESH_SECRET is not set. Refusing to start.");
+  process.exit(1);
+}
+
+// ─── Connect to MongoDB ────────────────────────────────────────────
 connectDB();
 
 const app = express();
 
-// Ensure uploads directory exists for file saving
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
-}
+// ─── Security Middleware ────────────────────────────────────────────
+app.use(helmet()); // Secure HTTP headers (HSTS, X-Content-Type-Options, etc.)
 
-// Middleware setup
+// CORS locked to known frontend origin — NOT *
 app.use(
   cors({
-    origin: "http://localhost:5173", // Allow requests from front-end Vite port
-    credentials: true
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    credentials: true // Required for httpOnly cookie exchange
   })
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Statically host uploaded documents
-app.use("/uploads", express.static("uploads"));
+// General rate limiting on ALL /api/* routes
+app.use("/api", generalLimiter);
 
-// Route Mountings
+// ─── Body Parsing ───────────────────────────────────────────────────
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(cookieParser());
+
+// ─── Route Mountings ────────────────────────────────────────────────
+// NOTE: Uploads are NOT served statically. Files are stored outside the
+// web root and can only be accessed through authenticated API endpoints.
 app.use("/api/auth", authRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/activity", activityRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
-// Base Ping Route
-app.get("/", (req, res) => {
+// Base health check
+app.get("/", (_req, res) => {
   res.json({ status: "healthy", service: "Resume Roaster API" });
 });
 
-// Global Error Handler Middleware
-app.use((err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  res.status(statusCode).json({
-    message: err.message,
-    stack: process.env.NODE_ENV === "production" ? null : err.stack
-  });
-});
+// ─── Global Error Handler ───────────────────────────────────────────
+// Must be registered LAST — catches all unhandled errors.
+// Returns generic messages to client; logs full detail server-side.
+app.use(errorHandler);
 
+// ─── Start Server ───────────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`[Server] running on port ${PORT}`);
+  logger.info(`[Server] running on port ${PORT}`);
 });

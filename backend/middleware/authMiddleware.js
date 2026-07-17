@@ -1,40 +1,33 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import logger from "../utils/logger.js";
 
-const protect = async (req, res, next) => {
-  let token;
+/**
+ * requireAuth middleware — verifies the short-lived JWT access token.
+ * Attaches req.userId from the verified token payload.
+ * Never trusts a userId passed in the request body.
+ */
+const requireAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      // Get token from header
-      token = req.headers.authorization.split(" ")[1];
-
-      // Verify token
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || "supersecretkey1234567890"
-      );
-
-      // Get user from database (omit password) and attach to request
-      req.user = await User.findById(decoded.id).select("-password");
-
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authorized, user not found" });
-      }
-
-      return next();
-    } catch (error) {
-      console.error("Token verification failed:", error.message);
-      return res.status(401).json({ message: "Not authorized, token failed" });
-    }
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Not authorized, no token provided" });
   }
 
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token provided" });
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    return next();
+  } catch (error) {
+    logger.warn({ err: error.message }, "Access token verification failed");
+
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token expired", code: "TOKEN_EXPIRED" });
+    }
+
+    return res.status(401).json({ message: "Not authorized, token failed" });
   }
 };
 
-export default protect;
+export default requireAuth;

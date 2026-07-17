@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "./Home.css";
+import "./Landing.css";
 
 function Home({ isLoggedIn, handleLogout }) {
   const navigate = useNavigate();
