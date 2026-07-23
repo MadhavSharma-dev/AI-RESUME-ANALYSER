@@ -1,147 +1,221 @@
-# AI Resume Analyser
+<div align="center">
 
-AI Resume Analyser is a full-stack web application that lets users upload a PDF resume and receive structured, AI-generated feedback. Uploaded resumes are converted into images and sent to a vision-capable LLM, which returns actionable feedback on tone, structure, skills, and ATS (Applicant Tracking System) compatibility.
+<img src="https://img.shields.io/badge/AI%20Powered-Resume%20Analyser-6366f1?style=for-the-badge&logo=sparkles&logoColor=white" alt="AI Resume Analyser" />
 
-## Features
+<h1>🧠 AI Resume Analyser</h1>
 
-- **Authentication** via Puter.js — sign in / sign out, protected routes
-- **Drag-and-drop resume upload** (PDF only, max 5 MB) with a target job title/role input
-- **PDF-to-image conversion** using PDF.js for AI analysis
-- **AI-powered feedback** via Claude AI / GPT-4o Vision, including:
-  - Overall score (0–100)
-  - ATS compatibility score (0–100)
-  - Strengths
-  - Areas for improvement
-  - Keyword gaps
-  - Tone assessment
-- **Resume dashboard** with resume cards, score badges, and quick access to feedback
-- **Data wipe utility** to delete all stored resumes and feedback
+<p>Upload your resume. Get brutally honest, AI-powered feedback — instantly.</p>
 
-## Tech Stack
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Express](https://img.shields.io/badge/Express-4-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongoosejs.com)
+[![License](https://img.shields.io/badge/License-Internal-gray?style=flat-square)](./LICENSE)
 
-| Layer | Technology |
+<br />
+
+![Demo Preview](https://placehold.co/860x420/0f172a/6366f1?text=AI+Resume+Analyser&font=raleway)
+
+</div>
+
+---
+
+## ✨ What It Does
+
+**AI Resume Analyser** is a full-stack MERN application that parses your PDF resume and sends it through a multi-model AI consensus pipeline. You get structured, actionable feedback scored across multiple dimensions — all within seconds.
+
+---
+
+## 🚀 Features
+
+- 🔐 **JWT Authentication** — secure sign up, login, and protected routes
+- 📂 **Drag-and-drop upload** — PDF only, max 5 MB, with magic-byte validation
+- 🤖 **Multi-model AI consensus** — Gemini, Groq, and Mistral vote on your resume
+- 📊 **Scored feedback** across tone, structure, ATS compatibility, and keywords
+- 📈 **Analytics dashboard** — score trends, activity history, and ATS readiness gauge
+- 🛡️ **Rate limiting + Helmet** — hardened API security out of the box
+- 🌗 **Dark / Light mode** — theme preference persisted across sessions
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+| | Technology |
 |---|---|
-| Frontend | React, Vite, Tailwind CSS, shadcn/ui |
-| Routing | React Router v6 |
-| Auth, Storage, AI | Puter.js SDK |
-| PDF Processing | PDF.js (`pdfjs-dist`) |
-| AI Model | Claude AI / GPT-4o Vision |
-| Hosting | Puter Hosting |
+| UI | React 19, Framer Motion |
+| Routing | React Router v7 |
+| Build | Vite 8 |
+| Linting | ESLint, oxlint, Prettier |
 
-## Getting Started
+### Backend
+| | Technology |
+|---|---|
+| Server | Node.js, Express 4 |
+| Database | MongoDB, Mongoose |
+| Auth | JWT, bcrypt |
+| File Upload | Multer |
+| AI Providers | Google Gemini, Groq, Mistral |
+| Parsing | pdf-parse, mammoth |
+| Logging | Pino + pino-pretty |
+| Validation | Zod |
+| Security | Helmet, express-rate-limit |
+
+---
+
+## 📁 Project Structure
+
+```
+├── backend/
+│   ├── config/          # DB connection
+│   ├── controllers/     # Route handlers
+│   ├── middleware/       # Auth, upload, rate limit, validation
+│   ├── models/          # Mongoose schemas (User, Resume, Activity)
+│   ├── routes/          # Express routers
+│   ├── services/        # AI providers + consensus logic
+│   └── utils/           # Logger, magic bytes, sanitiser
+│
+└── frontend/
+    └── src/
+        ├── api/         # Axios client + per-resource modules
+        ├── components/  # UI grouped by feature
+        ├── context/     # Auth, Theme, UI contexts
+        ├── hooks/       # Custom data-fetching hooks
+        └── lib/         # Utilities, motion variants
+```
+
+---
+
+## ⚙️ Getting Started
 
 ### Prerequisites
 
-- Node.js (LTS recommended)
-- npm
+- Node.js ≥ 18 (LTS recommended)
+- MongoDB instance (local or Atlas)
+- API keys for at least one AI provider (Gemini / Groq / Mistral)
 
-### Installation
+### 1. Clone the repo
 
 ```bash
 git clone <repository-url>
 cd ai-resume-analyser
+```
+
+### 2. Set up the backend
+
+```bash
+cd backend
+cp .env.example .env   # fill in your values
 npm install
-```
-
-### Environment Variables
-
-Copy the example environment file and fill in the required values:
-
-```bash
-cp .env.example .env
-```
-
-### Run Locally
-
-```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173` (default Vite port).
-
-### Build for Production
+### 3. Set up the frontend
 
 ```bash
-npm run build
-npm run preview
+cd frontend
+cp .env.example .env   # set VITE_API_URL
+npm install
+npm run dev
 ```
 
-## Project Structure
+Frontend runs at `http://localhost:5173` · Backend runs at `http://localhost:5000`
+
+---
+
+## 🔑 Environment Variables
+
+**`backend/.env`**
+```env
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/resume-analyser
+JWT_SECRET=your_jwt_secret
+GEMINI_API_KEY=your_gemini_key
+GROQ_API_KEY=your_groq_key
+MISTRAL_API_KEY=your_mistral_key
+```
+
+**`frontend/.env`**
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+---
+
+## 🧬 AI Feedback Pipeline
 
 ```
-/pages          # Route-level components
-/components     # Reusable UI components
-/lib            # Shared utilities and helpers
+PDF Upload ──► Text Extraction (pdf-parse)
+                      │
+                      ▼
+         ┌────────────────────────┐
+         │  Parallel AI Analysis  │
+         │  Gemini · Groq · Mistral│
+         └────────────────────────┘
+                      │
+                      ▼
+            Consensus Aggregation
+                      │
+                      ▼
+         Structured JSON Feedback
+    { score, ats, strengths, gaps, tone }
+                      │
+                      ▼
+            Saved to MongoDB
 ```
 
-### Routes
+---
 
-| Route | Description |
-|---|---|
-| `/` | Homepage — resume list and upload CTA |
-| `/upload` | Resume upload form |
-| `/resume/:id` | Resume feedback page |
-
-## Code Conventions
-
-- Components live in `/components/<ComponentName>.jsx`
-- Pages live in `/pages/<PageName>.jsx`
-- Shared logic lives in `/lib/`
-- Styling via Tailwind CSS only — no inline styles
-- PropTypes or JSDoc comments on all components
-
-## AI Feedback Pipeline
-
-1. User uploads a PDF and specifies a target job role.
-2. The PDF is converted into image(s) using PDF.js.
-3. Image(s) and job role context are sent to the AI model via `puter.ai.chat()`.
-4. The model returns structured JSON feedback:
+## 📊 Feedback Schema
 
 ```json
 {
-  "overall_score": 0,
-  "ats_compatibility": 0,
+  "overallScore": 0,
+  "atsScore": 0,
   "strengths": [],
   "improvements": [],
-  "keyword_gaps": [],
-  "tone_assessment": ""
+  "keywordGaps": [],
+  "toneAssessment": ""
 }
 ```
 
-5. Feedback is validated and saved to the Puter key-value store, keyed by resume ID.
+---
 
-## Deployment
+## 🔒 Security Highlights
 
-This project deploys via Puter Hosting.
+- Magic-byte file validation (not just extension checks)
+- JWT stored in `httpOnly` cookies
+- Input sanitisation via DOMPurify (frontend) and custom middleware (backend)
+- Zod schema validation on all API inputs
+- Helmet headers + per-route rate limiting
 
-1. Configure Puter deployment settings.
-2. Run a production build and test it locally.
-3. Deploy and verify all routes and the authentication flow work correctly in production.
+---
 
-## Out of Scope (v1.0)
+## 🗺️ Roadmap
 
-- Multi-user / team accounts
-- Resume comparison across multiple versions
-- Email notifications or scheduling
-- Payment / premium tier
-- Native mobile app
+- [ ] Resume version comparison
+- [ ] Job description matching score
+- [ ] Email report delivery
+- [ ] Multi-language support
 
-## Known Risks
+---
 
-- **Puter API rate limits** — AI calls may be throttled on the free tier
-- **PDF.js compatibility** — complex PDFs may not render correctly
-- **Large file uploads** — slower on poor connections
-- **AI JSON parsing** — the model may occasionally return malformed JSON
+## ⚠️ Known Limitations
 
-All AI calls are wrapped in error handling with user-visible notifications, and JSON responses are schema-validated before being saved.
+| Issue | Detail |
+|---|---|
+| AI rate limits | Free-tier providers may throttle heavy usage |
+| PDF complexity | Heavily formatted PDFs may lose fidelity during parsing |
+| JSON reliability | Occasional malformed AI responses (handled gracefully) |
 
-## Resources
+---
 
-- [Puter.js Docs](https://docs.puter.com)
-- [PDF.js](https://mozilla.github.io/pdf.js/)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [React Router v6](https://reactrouter.com/en/main)
+## 📄 License
 
-## License
+Internal / team project — not licensed for public distribution.
 
-Internal / team project. Not licensed for public distribution.
+---
+
+<div align="center">
+  <sub>Built with ☕ and a healthy distrust of vague resumes.</sub>
+</div>
