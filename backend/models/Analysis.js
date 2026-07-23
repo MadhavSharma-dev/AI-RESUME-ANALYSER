@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 
+/**
+ * Analysis Schema — Stores the output of the 3-LLM Ensemble Pipeline (Gemini, Groq, Mistral).
+ * Includes overall ATS score, 4-metric & 7-metric breakdowns, actionable bullet rewrites,
+ * matched/missing keywords, and audit logs of individual LLM model payloads.
+ */
 const analysisSchema = new mongoose.Schema(
   {
     resumeId: { type: mongoose.Schema.Types.ObjectId, ref: "Resume", required: true, index: true },
@@ -11,7 +16,7 @@ const analysisSchema = new mongoose.Schema(
     atsScore: { type: Number, default: 0 },
     overallScore: { type: Number, default: 0 },
     
-    // Score Breakdowns
+    // Legacy 4-Metric Breakdown
     breakdown: {
       keywords: { type: Number, default: 0 },
       format: { type: Number, default: 0 },
@@ -19,7 +24,7 @@ const analysisSchema = new mongoose.Schema(
       readability: { type: Number, default: 0 }
     },
     
-    // New Extended Breakdown (7 metrics)
+    // Extended 7-Metric Breakdown
     extendedBreakdown: {
       content: { type: Number, default: 0 },
       sections: { type: Number, default: 0 },
@@ -30,7 +35,7 @@ const analysisSchema = new mongoose.Schema(
       tailoring: { type: Number, default: 0 }
     },
 
-    // Detailed feedback
+    // Detailed feedback items
     issues: [
       {
         severity: { type: String, enum: ["high", "medium", "low"], default: "medium" },
@@ -52,7 +57,7 @@ const analysisSchema = new mongoose.Schema(
     ],
     verdict: { type: String, default: "" },
 
-    // Tracking the ensemble execution
+    // Ensemble Audit Log
     modelsUsed: [{ type: String }],
     rawModelOutputs: {
       gemini: { type: mongoose.Schema.Types.Mixed },
@@ -63,7 +68,7 @@ const analysisSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Compound index to quickly find all analyses for a specific resume version
+// Compound index for instant version-specific analysis queries
 analysisSchema.index({ resumeId: 1, versionNumber: 1 });
 
 const Analysis = mongoose.model("Analysis", analysisSchema);

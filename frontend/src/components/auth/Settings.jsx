@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { updateProfile, uploadAvatar, getUserStats } from "../../api/auth";
 import HeaderUtils from "../common/HeaderUtils";
 import "./Settings.css";
 
-function Settings({ user, onUpdateUser }) {
+function Settings({ user, onUpdateUser, handleLogout }) {
+  const navigate = useNavigate();
   const [name, setName] = useState(user?.name || "Candidate");
   const [email, setEmail] = useState(user?.email || "candidate@roaster.ai");
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -12,6 +14,7 @@ function Settings({ user, onUpdateUser }) {
   const [saved, setSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [stats, setStats] = useState({ uploads: 0, analyses: 0, rewrites: 0 });
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -30,6 +33,14 @@ function Settings({ user, onUpdateUser }) {
       })
       .catch((err) => console.error("Failed to load user stats", err));
   }, []);
+
+  const confirmLogout = async () => {
+    setShowLogoutModal(false);
+    if (handleLogout) {
+      await handleLogout();
+    }
+    navigate("/login");
+  };
 
   // FIX 1: Avatar Image File Picker & Upload Handler
   const handleAvatarSelect = async (e) => {
@@ -229,6 +240,24 @@ function Settings({ user, onUpdateUser }) {
             </div>
           </div>
 
+          {/* Session & Security Card */}
+          <div className="settings-card">
+            <h2 className="settings-section-title">Session & Security</h2>
+            <p className="settings-card-sub">Manage your active session and sign out securely</p>
+            <button 
+              type="button" 
+              className="settings-logout-action-btn"
+              onClick={() => setShowLogoutModal(true)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Log Out of Session
+            </button>
+          </div>
+
           {/* Danger Zone Card */}
           <div className="settings-card settings-danger-card">
             <h2 className="settings-section-title danger">Danger Zone</h2>
@@ -241,6 +270,31 @@ function Settings({ user, onUpdateUser }) {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog Modal */}
+      {showLogoutModal && (
+        <div className="settings-modal-overlay" onClick={() => setShowLogoutModal(false)}>
+          <div className="settings-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-modal-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </div>
+            <h3>Log Out of Resume Roaster?</h3>
+            <p>Are you sure you want to log out? Your server-side refresh token cookie will be invalidated and your session closed.</p>
+            <div className="settings-modal-actions">
+              <button className="btn-modal-cancel" onClick={() => setShowLogoutModal(false)}>
+                Cancel
+              </button>
+              <button className="btn-modal-confirm" onClick={confirmLogout}>
+                Yes, Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

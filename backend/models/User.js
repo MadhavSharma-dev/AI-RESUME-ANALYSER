@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
+/**
+ * User Schema — Stores candidate identity, hashed authentication credentials,
+ * avatar storage URL, OAuth provider bindings, and hashed refresh tokens.
+ */
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -17,7 +21,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: function() { return this.authProvider === 'local'; },
       minlength: 8,
-      select: false  // SECURITY: Never returned in queries by default
+      select: false  // Excluded from query results by default for defense-in-depth
     },
     avatarUrl: { type: String, default: null },
     authProvider: {
@@ -38,24 +42,28 @@ const userSchema = new mongoose.Schema(
     refreshTokenHash: {
       type: String,
       default: null,
-      select: false  // SECURITY: Never returned in queries by default
+      select: false  // SHA-256 hashed refresh token; excluded from queries by default
     }
   },
   { timestamps: true }
 );
 
-// Method to verify password match
+/**
+ * Compares plaintext candidate password with stored bcrypt hash.
+ */
 userSchema.methods.matchPassword = async function (enteredPassword) {
   if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Hook to automatically hash passwords before saving — cost factor 12
+/**
+ * Pre-save hook: Automatically hashes modified passwords using bcrypt (cost factor 12).
+ */
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
   }
-  const salt = await bcrypt.genSalt(12); // SECURITY: cost factor ≥ 12
+  const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });

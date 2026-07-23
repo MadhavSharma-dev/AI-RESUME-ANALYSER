@@ -37,7 +37,8 @@ export function AppRoutes({ isLoggedIn, handleLogout, handleLogin, user, onUpdat
           <Route path="/resumes/:id" element={<ResumeDetail user={user} />} />
           <Route path="/history" element={<History user={user} />} />
           <Route path="/analytics" element={<Analytics user={user} />} />
-          <Route path="/settings" element={<Settings user={user} onUpdateUser={onUpdateUser} />} />
+          <Route path="/settings" element={<Settings user={user} onUpdateUser={onUpdateUser} handleLogout={handleLogout} />} />
+          <Route path="/profile" element={<Navigate to="/settings" replace />} />
           <Route path="/upload" element={<UploadResume />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </>
