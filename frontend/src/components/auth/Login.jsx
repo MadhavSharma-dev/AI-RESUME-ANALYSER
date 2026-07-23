@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from '@react-oauth/google';
+import favIcon from "../../assets/brand/fav-icon.png";
 import "./Auth.css";
 import { login, googleOAuthLogin } from "../../api/auth";
 
