@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import favIcon from "../../assets/brand/fav-icon.png";
 import "./Landing.css";
 
 function Home({ isLoggedIn, handleLogout }) {
@@ -635,7 +636,7 @@ function Home({ isLoggedIn, handleLogout }) {
           {/* Brand Info */}
           <div className="footer-brand">
             <div className="footer-logo">
-              <div className="nav-logo-icon" style={{ backgroundColor: "var(--gold)", color: "var(--navy)" }}>R</div>
+              <img src={favIcon} alt="Resume Roaster" style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "8px" }} />
               <span>Resume Roaster</span>
             </div>
             <p className="footer-tagline">

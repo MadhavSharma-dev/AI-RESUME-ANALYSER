@@ -26,19 +26,12 @@
   align-items: stretch;
 }
 
-.auth-logo-icon {
-  width: 44px;
-  height: 44px;
-  background-color: var(--navy);
+.auth-logo-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--beige);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.4rem;
-  box-shadow: 0 4px 12px rgba(31, 42, 68, 0.15);
+  box-shadow: 0 4px 12px rgba(31, 42, 68, 0.12);
   margin-bottom: 2rem;
   align-self: flex-start;
 }

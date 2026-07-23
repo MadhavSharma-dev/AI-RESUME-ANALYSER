@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { sidebarLinkHover } from "../../lib/motion";
+import favIcon from "../../assets/brand/fav-icon.png";
 import "./Sidebar.css";
 
 const MotionNavLink = motion.create(NavLink);
@@ -64,7 +65,7 @@ function Sidebar({ user }) {
     <aside className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">R</div>
+        <img src={favIcon} alt="Resume Roaster" className="sidebar-logo-img" />
       </div>
 
       {/* Nav links */}

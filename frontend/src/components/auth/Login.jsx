@@ -77,7 +77,7 @@ function Login({ handleLogin }) {
       {/* LEFT COLUMN: LOGIN FORM */}
       <div className="auth-left-pane">
         <div className="auth-form-card">
-          <div className="auth-logo-icon">R</div>
+          <img src={favIcon} alt="Resume Roaster" className="auth-logo-img" />
           <h1 className="auth-title">Welcome back</h1>
           <p className="auth-subtitle">Login to continue your analysis.</p>
 

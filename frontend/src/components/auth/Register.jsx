@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from '@react-oauth/google';
+import favIcon from "../../assets/brand/fav-icon.png";
 import "./Auth.css";
 import { signup, googleOAuthLogin } from "../../api/auth";
 
@@ -89,7 +90,7 @@ function Signup({ handleLogin }) {
       {/* LEFT COLUMN: SIGNUP FORM */}
       <div className="auth-left-pane">
         <div className="auth-form-card">
-          <div className="auth-logo-icon">R</div>
+          <img src={favIcon} alt="Resume Roaster" className="auth-logo-img" />
           <h1 className="auth-title">Get started</h1>
           <p className="auth-subtitle">Free to start. No credit card required.</p>
 

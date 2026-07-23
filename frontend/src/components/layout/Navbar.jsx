@@ -1,4 +1,5 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import favIcon from "../../assets/brand/fav-icon.png";
 import "../../App.css";
 import "../landing/Landing.css"; // Ensure floating capsule styling is loaded
 
@@ -29,7 +30,7 @@ function Navbar({ isLoggedIn, handleLogout }) {
       <div className="nav-capsule-container">
         <nav className="nav-capsule">
           <div className="nav-logo">
-            <div className="nav-logo-icon">R</div>
+            <img src={favIcon} alt="Resume Roaster Logo" style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "8px" }} />
             <span>Resume Roaster</span>
           </div>
 
@@ -72,7 +73,7 @@ function Navbar({ isLoggedIn, handleLogout }) {
     <nav className="navbar" style={{ backgroundColor: "#ffffff", borderBottom: "1px solid rgba(31, 42, 68, 0.08)", padding: "0 2rem" }}>
       <div className="navbar-brand">
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-          <div className="nav-logo-icon" style={{ width: "32px", height: "32px", fontSize: "1.15rem", borderRadius: "10px" }}>R</div>
+          <img src={favIcon} alt="Resume Roaster Logo" style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "8px" }} />
           <span style={{ fontWeight: 700, fontFamily: "var(--font-display)", color: "var(--navy)", fontSize: "1.15rem" }}>Resume Roaster</span>
         </Link>
       </div>

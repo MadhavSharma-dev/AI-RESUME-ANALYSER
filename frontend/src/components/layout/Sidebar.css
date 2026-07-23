@@ -20,19 +20,12 @@
   margin-bottom: 2.5rem;
 }
 
-.sidebar-logo-icon {
+.sidebar-logo-img {
   width: 44px;
   height: 44px;
-  background: var(--navy, #1f2a44); /* premium dark navy background */
-  color: var(--gold, #c6a75e); /* soft gold icon */
-  border-radius: 14px 4px 14px 14px; /* organic leaf shape */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1.25rem;
-  font-family: var(--font-display, serif);
-  box-shadow: 0 4px 12px rgba(46, 77, 60, 0.2);
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(31, 42, 68, 0.12);
 }
 
 .sidebar-nav {
