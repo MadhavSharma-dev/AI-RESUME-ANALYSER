@@ -1,0 +1,387 @@
+.about-page-container {
+  padding: 3rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+
+.about-back-link {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s;
+}
+
+.about-back-link:hover {
+  color: var(--primary);
+}
+
+.about-header {
+  margin-bottom: 3rem;
+}
+
+.about-badge {
+  display: inline-block;
+  background: rgba(198, 167, 94, 0.12);
+  color: var(--gold);
+  border: 1px solid rgba(198, 167, 94, 0.25);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.8rem;
+  border-radius: 99px;
+  margin-bottom: 1rem;
+}
+
+.about-title {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  color: var(--navy);
+  margin: 0 0 0.75rem 0;
+}
+
+.about-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.about-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.about-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.about-card.hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #faf9f6 100%);
+  border-left: 4px solid var(--navy);
+}
+
+.about-card h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--navy);
+  margin: 0 0 1rem 0;
+}
+
+.about-card p {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+}
+
+.about-feature-list {
+  padding-left: 1.25rem;
+  margin: 0 0 1rem 0;
+}
+
+.about-feature-list li {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.about-note {
+  font-size: 0.85rem !important;
+  color: var(--text-secondary) !important;
+  font-style: italic;
+}
+
+.about-caps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.cap-item {
+  background: #faf9f6;
+  padding: 1.25rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.cap-item h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+
+.cap-item p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.about-footer {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* MAKERS SECTION (3D FLIP CARDS) */
+.makers-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fdfbf7 100%);
+  border: 1px solid rgba(217, 119, 6, 0.15);
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.06);
+}
+
+.makers-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.4rem;
+}
+
+.makers-header h2 {
+  margin: 0;
+}
+
+.makers-badge {
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+  border: 1px solid #fde68a;
+}
+
+.makers-sub {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem 0;
+}
+
+.makers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
+.flip-card-container {
+  perspective: 1000px;
+  cursor: pointer;
+  width: 100%;
+  min-height: 340px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flip-card-container.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.flip-card-front {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+  display: flex;
+  gap: 1.25rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.flip-card-container:hover .flip-card-front {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.maker-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--primary) 100%);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(31, 42, 68, 0.25);
+}
+
+.maker-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.maker-info h3 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.1rem;
+  color: var(--navy);
+}
+
+.maker-role {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.maker-bio {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0 0 0.8rem 0;
+}
+
+.maker-tech-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.8rem;
+}
+
+.maker-tech-chips span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.flip-hint {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: auto;
+  align-self: flex-start;
+  display: inline-block;
+  background: rgba(66, 99, 235, 0.08);
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+}
+
+.flip-card-back {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #ffffff;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+}
+
+.flip-card-back h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.2rem;
+  color: #ffffff;
+}
+
+.flip-back-sub {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0 0 1.25rem 0;
+}
+
+.maker-contact-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 240px;
+  margin-bottom: 1rem;
+}
+
+.btn-contact-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-contact-action.linkedin {
+  background: #0a66c2;
+  color: #ffffff;
+}
+
+.btn-contact-action.linkedin:hover {
+  background: #004182;
+  transform: translateY(-2px);
+}
+
+.btn-contact-action.github {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.btn-contact-action.github:hover {
+  background: #f1f5f9;
+  transform: translateY(-2px);
+}
+
+.btn-contact-action.email {
+  background: var(--gold);
+  color: #ffffff;
+}
+
+.btn-contact-action.email:hover {
+  background: #b45309;
+  transform: translateY(-2px);
+}
+
+.btn-flip-back {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-flip-back:hover {
+  color: #ffffff;
+  border-color: #ffffff;
+}

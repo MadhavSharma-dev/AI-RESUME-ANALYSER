@@ -510,29 +510,16 @@
 
 .auth-oauth-group {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.btn-auth-apple {
-  display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 100%;
-  padding: 0.7rem;
-  border: 1px solid #000;
-  border-radius: 4px;
-  background-color: #000;
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  margin-bottom: 0.5rem;
 }
 
-.btn-auth-apple:hover {
-  background-color: #333;
+.auth-oauth-group > div {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
 }
 
 

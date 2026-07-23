@@ -678,7 +678,7 @@ function Home({ isLoggedIn, handleLogout }) {
         <div className="footer-bottom">
           <span>&copy; {new Date().getFullYear()} Resume Roaster. All rights reserved. Built for developers.</span>
           <div className="footer-socials">
-            <span>Made with ❤ by Google DeepMind</span>
+            <span>Made by Google DeepMind</span>
           </div>
         </div>
       </footer>

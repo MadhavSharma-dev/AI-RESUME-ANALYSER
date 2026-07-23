@@ -12,16 +12,12 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState({ name: "" });
   const [loading, setLoading] = useState(true);
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
   const location = useLocation();
 
-  // Apply theme to <html> element
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
+    document.documentElement.setAttribute("data-theme", "light");
+    localStorage.setItem("theme", "light");
+  }, []);
 
   // ─── Session Restore via httpOnly Cookie ──────────────────────
   // On mount, attempt to refresh the access token using the httpOnly
@@ -33,7 +29,7 @@ function App() {
         await refreshSession();
         const profile = await getProfile();
         setIsLoggedIn(true);
-        setUser({ name: profile.name, email: profile.email });
+        setUser({ name: profile.name, email: profile.email, avatarUrl: profile.avatarUrl || null });
       } catch {
         // No valid session — user must log in
         clearAccessToken();
@@ -47,7 +43,7 @@ function App() {
 
   const handleLogin = (userData) => {
     setIsLoggedIn(true);
-    setUser({ name: userData.name, email: userData.email });
+    setUser({ name: userData.name, email: userData.email, avatarUrl: userData.avatarUrl || null });
   };
 
   const handleLogout = async () => {
@@ -63,8 +59,8 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "var(--bg-primary)", color: "var(--text-primary)", fontWeight: 600 }}>
-        Loading Session...
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#f8fafc" }}>
+        <div style={{ fontSize: "1rem", color: "#64748b" }}>Loading Resume Roaster...</div>
       </div>
     );
   }
@@ -75,15 +71,15 @@ function App() {
     <>
       {isLoggedIn && useAppShell ? (
         <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-primary)" }}>
-          <Sidebar handleLogout={handleLogout} user={user} theme={theme} toggleTheme={toggleTheme} />
+          <Sidebar handleLogout={handleLogout} user={user} />
           <div style={{ marginLeft: "120px", flex: 1, display: "flex", flexDirection: "column" }}>
-              <AppRoutes isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} user={user} />
+              <AppRoutes isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} user={user} onUpdateUser={(u) => setUser(u)} />
           </div>
         </div>
       ) : (
         <>
           <Navbar isLoggedIn={isLoggedIn} handleLogout={handleLogout} />
-          <AppRoutes isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} user={user} />
+          <AppRoutes isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} user={user} onUpdateUser={(u) => setUser(u)} />
         </>
       )}
     </>

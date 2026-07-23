@@ -38,34 +38,6 @@
   --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* ── Dark theme ── */
-[data-theme="dark"] {
-  --navy: #e2e8f4;
-  --navy-dark: #f0f4ff;
-  --navy-light: #cbd5e8;
-  --beige: #2a2d3a;
-  --beige-light: #1a1d27;
-  --beige-dark: #141620;
-  --gold: #d4a843;
-  --gold-hover: #c49635;
-  --gold-light: rgba(212, 168, 67, 0.15);
-  --gold-glow: rgba(212, 168, 67, 0.25);
-
-  --bg-primary: #1a1d27;
-  --bg-secondary: #21242f;
-  --bg-card: #21242f;
-  --accent: #7c9cf8;
-  --accent-hover: #9ab0ff;
-  --accent-light: rgba(124, 156, 248, 0.12);
-  --text-primary: #e2e8f4;
-  --text-secondary: #8892a8;
-  --border: rgba(255, 255, 255, 0.08);
-  --input-bg: #2a2d3a;
-  --danger: #f07070;
-  --success: #4ade80;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
 html {
   scroll-behavior: smooth;
 }

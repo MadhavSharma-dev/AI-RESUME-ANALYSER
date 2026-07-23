@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../App.css";
 import "./Dashboard.css";
-import { fetchActivity } from "../../api/dashboard";
+import { fetchActivity, fetchDashboardOverview } from "../../api/dashboard";
 import { fetchResumesList } from "../../api/resumes";
 import { motion, staggerContainer, fadeUpItem, cardHover } from "../../lib/motion";
 
@@ -10,21 +10,46 @@ import { SparklineBarChart } from "./SparklineBarChart";
 import { SparklineLineChart } from "./SparklineLineChart";
 import { AtsReadinessGauge } from "./AtsReadinessGauge";
 import { ScoreEvolutionChart } from "./ScoreEvolutionChart";
+import { DashboardModal } from "./DashboardModal";
+import HeaderUtils from "../common/HeaderUtils";
 
 function Dashboard({ user }) {
   const navigate = useNavigate();
   const [resumes, setResumes] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isDemoMode, setIsDemoMode] = useState(false);
 
+  // Modal State
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    type: null,
+    data: null,
+    title: ""
+  });
+
+  const openModal = (type, customData = null, title = "") => {
+    setModalState({
+      isOpen: true,
+      type,
+      data: customData || overview,
+      title
+    });
+  };
+
+  const closeModal = () => {
+    setModalState((prev) => ({ ...prev, isOpen: false }));
+  };
+
   useEffect(() => {
-    Promise.all([fetchResumesList(), fetchActivity()])
-      .then(([resumesData, activityData]) => {
+    Promise.all([fetchResumesList(), fetchActivity(), fetchDashboardOverview()])
+      .then(([resumesData, activityData, overviewData]) => {
         setResumes(resumesData);
         setActivity(activityData);
-        
+        setOverview(overviewData);
+
         // If there are no resumes in MongoDB, enable Demo Mode automatically
         if (resumesData.length === 0) {
           setIsDemoMode(true);
@@ -33,11 +58,6 @@ function Dashboard({ user }) {
       .catch((err) => console.error("Dashboard fetch error:", err.message))
       .finally(() => setLoading(false));
   }, []);
-
-  const onLogout = () => {
-    // Logout is handled by App.jsx via handleLogout prop
-    navigate("/login");
-  };
 
   const displayName = user?.name
     ? user.name.charAt(0).toUpperCase() + user.name.slice(1)
@@ -66,48 +86,57 @@ function Dashboard({ user }) {
     ]
   };
 
-  // Derive active context
   const hasResumes = resumes.length > 0;
   const activeResume = hasResumes ? resumes[0] : null;
-  
+
+  // Real or Demo Stats
   const stats = {
-    resumesCount: hasResumes ? resumes.length : demoStats.resumesCount,
-    versionsCount: hasResumes ? resumes.reduce((acc, r) => acc + r.versions.length, 0) : demoStats.versionsCount,
+    resumesCount: hasResumes ? resumes.length : (isDemoMode ? demoStats.resumesCount : 0),
+    versionsCount: hasResumes 
+      ? resumes.reduce((acc, r) => acc + r.versions.length, 0) 
+      : (isDemoMode ? demoStats.versionsCount : 0),
     issuesCount: hasResumes 
-      ? (activeResume.versions[activeResume.versions.length - 1]?.improvements?.length || 0) + (activeResume.versions[activeResume.versions.length - 1]?.keywordGaps?.length || 0)
-      : demoStats.issuesCount,
+      ? (overview?.allIssues?.length || 0)
+      : (isDemoMode ? demoStats.issuesCount : 0),
     keywordsCount: hasResumes 
-      ? Math.round((activeResume.versions[activeResume.versions.length - 1]?.breakdown?.keywords || 70) / 10)
-      : demoStats.keywordsCount,
-    keywordsTotal: hasResumes ? 12 : demoStats.keywordsTotal,
+      ? (overview?.keywords?.matched?.length || 0)
+      : (isDemoMode ? demoStats.keywordsCount : 0),
+    keywordsTotal: hasResumes 
+      ? ((overview?.keywords?.matched?.length || 0) + (overview?.keywords?.missing?.length || 0) || 12)
+      : (isDemoMode ? demoStats.keywordsTotal : 0),
     avgAtsScore: hasResumes 
-      ? Math.round(resumes.reduce((acc, r) => acc + (r.versions[r.versions.length - 1]?.atsScore || 0), 0) / resumes.length)
-      : demoStats.avgAtsScore,
+      ? (overview?.bestAtsScore || 0) 
+      : (isDemoMode ? demoStats.avgAtsScore : 0),
     scoreChange: hasResumes 
       ? (() => {
-          const firstVer = activeResume.versions[0]?.atsScore || 0;
-          const lastVer = activeResume.versions[activeResume.versions.length - 1]?.atsScore || 0;
-          return lastVer - firstVer;
+          if (!overview?.trends || overview.trends.length < 2) return 0;
+          return (overview.trends[overview.trends.length - 1].atsScore || 0) - (overview.trends[0].atsScore || 0);
         })()
-      : demoStats.scoreChange,
+      : (isDemoMode ? demoStats.scoreChange : 0),
     activeResumeName: hasResumes ? activeResume.name.replace(/\.[^.]+$/, "") : demoStats.activeResumeName
   };
 
   const dashboardVersions = hasResumes 
     ? activeResume.versions.map((ver, idx, arr) => ({
         versionNumber: ver.versionNumber,
-        overallScore: ver.overallScore,
+        overallScore: ver.overallScore || ver.atsScore || 50,
         targetRole: ver.targetRole,
-        tag: idx === 0 ? "UPLOAD" : "REWRITE PASS",
-        change: idx === 0 ? 0 : ver.overallScore - arr[idx - 1].overallScore
-      })).slice(-3) // Show last 3 versions
+        tag: idx === 0 ? "UPLOAD" : "ROAST REWRITE",
+        change: idx === 0 ? 0 : (ver.overallScore || 50) - (arr[idx - 1].overallScore || 50)
+      })).slice(-3)
     : demoStats.versionsList;
-
-  const versionScoresList = dashboardVersions.map(v => v.overallScore);
 
   const displayActivity = hasResumes 
     ? activity.slice(0, 5) 
     : demoStats.recentActivity;
+
+  // Real-time search filtering across resumes, roles, keywords
+  const searchFilteredResumes = search.trim() === "" ? [] : resumes.filter((r) => {
+    const query = search.toLowerCase();
+    const nameMatch = r.name.toLowerCase().includes(query);
+    const roleMatch = r.versions.some((v) => v.targetRole?.toLowerCase().includes(query));
+    return nameMatch || roleMatch;
+  });
 
   function timeAgo(dateStr) {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -120,10 +149,10 @@ function Dashboard({ user }) {
   }
 
   function activityLabel(act) {
-    const name = act.resumeName.replace(/\.[^.]+$/, "");
-    if (act.type === "upload") return `V${act.versionNumber} created for ${name}`;
-    if (act.type === "analysis") return `Analysis complete on ${name}`;
-    if (act.type === "rewrite") return `Rewrites applied for ${name}`;
+    const name = act.resumeName ? act.resumeName.replace(/\.[^.]+$/, "") : "Resume";
+    if (act.type === "upload") return `V${act.versionNumber} uploaded for ${name}`;
+    if (act.type === "analysis") return `AI Roast complete on ${name}`;
+    if (act.type === "rewrite") return `Rewrites applied to ${name}`;
     return name;
   }
 
@@ -133,25 +162,9 @@ function Dashboard({ user }) {
       <div className="dash-overview-header">
         <div>
           <h1 className="dash-overview-greeting">Hello, {displayName}.</h1>
-          <p className="dash-overview-sub">Sharpen your resume with calm, focused AI insights.</p>
+          <p className="dash-overview-sub">Sharpen your resume with witty, roast-style AI insights.</p>
         </div>
-        <div className="header-utils">
-          <div className="header-search-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input 
-              type="text" 
-              placeholder="Search resumes, keywords, rewrites..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <span className="header-search-kbd">⌘ K</span>
-          </div>
-          <button className="header-btn" title="Toggle theme">🌙</button>
-          <button className="header-btn" title="Notifications">🔔</button>
-        </div>
+        <HeaderUtils searchVal={search} onSearchChange={setSearch} />
       </div>
 
       {isDemoMode && (
@@ -161,13 +174,13 @@ function Dashboard({ user }) {
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
-          <span><strong>Demo Mode Active</strong>: You are viewing placeholder data. Upload a resume PDF to populate your personal board!</span>
+          <span><strong>Demo Mode Active</strong>: You are viewing placeholder data. Upload a resume PDF to get your actual roasts!</span>
           <button className="demo-banner-btn" onClick={() => navigate("/resumes")}>Upload Resume</button>
         </div>
       )}
 
       {loading ? (
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Loading dashboard...</p>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Loading your roaster board...</p>
       ) : (
         <>
           {/* Row 1: Summary Cards Grid */}
@@ -178,7 +191,13 @@ function Dashboard({ user }) {
             animate="visible"
           >
             {/* 1. ATS Score */}
-            <motion.div className="dash-card summary-card" variants={fadeUpItem} whileHover={cardHover}>
+            <motion.div 
+              className="dash-card summary-card" 
+              variants={fadeUpItem} 
+              whileHover={cardHover}
+              onClick={() => openModal("ats", overview, "ATS Score Breakdown Across Roasts")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="summary-title-row">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -193,7 +212,13 @@ function Dashboard({ user }) {
             </motion.div>
 
             {/* 2. Versions */}
-            <motion.div className="dash-card summary-card" variants={fadeUpItem} whileHover={cardHover}>
+            <motion.div 
+              className="dash-card summary-card" 
+              variants={fadeUpItem} 
+              whileHover={cardHover}
+              onClick={() => openModal("versions", overview, "All Resume Versions")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="summary-title-row">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <rect x="3" y="3" width="7" height="9" rx="1" />
@@ -211,7 +236,13 @@ function Dashboard({ user }) {
             </motion.div>
 
             {/* 3. Issues Identified */}
-            <motion.div className="dash-card summary-card" variants={fadeUpItem} whileHover={cardHover}>
+            <motion.div 
+              className="dash-card summary-card" 
+              variants={fadeUpItem} 
+              whileHover={cardHover}
+              onClick={() => openModal("issues", overview, "Top Resume Flaws Flagged")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="summary-title-row">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="12" cy="12" r="10" />
@@ -228,7 +259,13 @@ function Dashboard({ user }) {
             </motion.div>
 
             {/* 4. Keywords Matched */}
-            <motion.div className="dash-card summary-card dark-theme" variants={fadeUpItem} whileHover={cardHover}>
+            <motion.div 
+              className="dash-card summary-card dark-theme" 
+              variants={fadeUpItem} 
+              whileHover={cardHover}
+              onClick={() => openModal("keywords", overview, "Keywords Match Breakdown")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="summary-title-row">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -255,23 +292,34 @@ function Dashboard({ user }) {
               <div className="card-header-row">
                 <div>
                   <h3 className="card-title">Score Evolution</h3>
-                  <p className="card-sub">How your ATS score trended across versions</p>
+                  <p className="card-sub">Chronological ATS score progression across ALL your roasts</p>
                 </div>
                 <span className="header-status-badge">On track</span>
               </div>
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", marginTop: "1rem" }}>
-                <ScoreEvolutionChart versionScores={versionScoresList} />
+                <ScoreEvolutionChart 
+                  dataPoints={overview?.trends} 
+                  onPointClick={(point) => openModal("point", { point }, `Roast Point Detail: ${point.resumeName}`)}
+                />
               </div>
             </motion.div>
 
             {/* 2. ATS Readiness Speedometer */}
-            <motion.div className="dash-card" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between" }} variants={fadeUpItem} whileHover={cardHover}>
+            <motion.div 
+              className="dash-card" 
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }} 
+              variants={fadeUpItem} 
+              whileHover={cardHover}
+              onClick={() => openModal("ats", overview, "Peak ATS Readiness Detail")}
+            >
               <div style={{ alignSelf: "flex-start", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 className="card-title">ATS Readiness</h3>
-                  <span className="header-status-badge" style={{ fontSize: "0.6rem", padding: "0.15rem 0.5rem" }}>Excellent</span>
+                  <span className="header-status-badge" style={{ fontSize: "0.6rem", padding: "0.15rem 0.5rem" }}>
+                    {stats.avgAtsScore >= 80 ? "Excellent" : stats.avgAtsScore >= 60 ? "Good" : "Needs Work"}
+                  </span>
                 </div>
-                <p className="card-sub">How well your resume parses for ATS</p>
+                <p className="card-sub">Highest ATS score across all your resumes</p>
               </div>
 
               <div style={{ margin: "1rem 0" }}>
@@ -279,20 +327,32 @@ function Dashboard({ user }) {
               </div>
 
               <span className="summary-badge" style={{ fontSize: "0.65rem" }}>
-                +{stats.scoreChange} vs last analysis
+                +{stats.scoreChange} vs first roast
               </span>
             </motion.div>
 
-            {/* 3. Alex Chen Profile Card */}
-            <motion.div className="dash-card" variants={fadeUpItem} whileHover={cardHover}>
+            {/* 3. Candidate Profile Card */}
+            <motion.div 
+              className="dash-card" 
+              variants={fadeUpItem} 
+              whileHover={cardHover}
+              onClick={() => openModal("profile", { user, ...stats }, "Candidate Roaster Profile")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="profile-card-content">
                 <div className="profile-avatar-wrap">
-                  <div className="profile-avatar-initials">AC</div>
+                  <div className="profile-avatar-initials" style={{ overflow: "hidden", padding: 0 }}>
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={displayName} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                    ) : (
+                      displayName.slice(0, 2).toUpperCase()
+                    )}
+                  </div>
                   <div className="profile-avatar-badge" title="Verified Account">✓</div>
                 </div>
 
                 <h3 className="profile-name">{displayName}</h3>
-                <span className="profile-email">{user?.email || "alex@timetoprogram.com"}</span>
+                <span className="profile-email">{user?.email || "candidate@roaster.ai"}</span>
                 <span className="profile-plan">Pro plan</span>
 
                 <div className="profile-stats-grid">
@@ -306,11 +366,11 @@ function Dashboard({ user }) {
                   </div>
                   <div className="profile-stat-item">
                     <span className="profile-stat-lbl">Analyses</span>
-                    <span className="profile-stat-val">{stats.versionsCount}</span>
+                    <span className="profile-stat-val">{overview?.analysesCount || stats.versionsCount}</span>
                   </div>
                 </div>
 
-                <div className="profile-actions">
+                <div className="profile-actions" onClick={(e) => e.stopPropagation()}>
                   <button className="profile-action-btn primary" onClick={() => navigate("/resumes")}>
                     Upload
                   </button>
@@ -331,13 +391,19 @@ function Dashboard({ user }) {
             animate="visible"
           >
             {/* 1. Resume Versions iteration journey */}
-            <motion.div className="dash-card" variants={fadeUpItem} whileHover={cardHover}>
+            <motion.div 
+              className="dash-card" 
+              variants={fadeUpItem} 
+              whileHover={cardHover}
+              onClick={() => openModal("versions", overview, "Resume Version History")}
+              style={{ cursor: "pointer" }}
+            >
               <div className="card-header-row" style={{ marginBottom: "1rem" }}>
                 <div>
                   <h3 className="card-title">Resume Versions</h3>
                   <p className="card-sub">Your iteration journey, scored</p>
                 </div>
-                <button className="dash-see-all" onClick={() => navigate("/resumes")} style={{ border: "none", background: "transparent", color: "var(--navy)", fontWeight: 700, cursor: "pointer" }}>
+                <button className="dash-see-all" onClick={(e) => { e.stopPropagation(); navigate("/resumes"); }} style={{ border: "none", background: "transparent", color: "var(--navy)", fontWeight: 700, cursor: "pointer" }}>
                   View all ↗
                 </button>
               </div>
@@ -381,7 +447,7 @@ function Dashboard({ user }) {
                 <div>
                   <span className="node-latest-badge">Since V1 +{stats.scoreChange} pts overall</span>
                 </div>
-                <button className="node-latest-btn" onClick={() => navigate("/resumes")}>
+                <button className="node-latest-btn" onClick={(e) => { e.stopPropagation(); if (activeResume) navigate(`/resumes/${activeResume._id}`); else navigate("/resumes"); }}>
                   Open Resume 
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12" />
@@ -408,96 +474,111 @@ function Dashboard({ user }) {
                         <>
                           {dashboardVersions.length >= 2 && (
                             <path
-                                d={tLineD}
-                                fill="none"
-                                stroke="var(--navy, #1f2a44)"
-                                strokeWidth="2"
-                              />
-                            )}
-                            {tPoints.map((p, idx) => (
-                              <circle
-                                key={idx}
-                                cx={p.x}
-                                cy={p.y}
-                                r="3.5"
-                                fill="#C6A75E"
-                                stroke="#ffffff"
-                                strokeWidth="1.5"
-                              />
-                            ))}
-                          </>
-                        );
-                      })()}
-                    </svg>
-                  </div>
+                              d={tLineD}
+                              fill="none"
+                              stroke="var(--navy, #1f2a44)"
+                              strokeWidth="2"
+                            />
+                          )}
+                          {tPoints.map((p, idx) => (
+                            <circle
+                              key={idx}
+                              cx={p.x}
+                              cy={p.y}
+                              r="3.5"
+                              fill="#C6A75E"
+                              stroke="#ffffff"
+                              strokeWidth="1.5"
+                            />
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </svg>
                 </div>
-  
-                {/* Progress Tier bar */}
-                <div className="tier-progress-section">
-                  <span className="trajectory-graph-lbl">Tier Progress</span>
-                  <div className="tier-progress-track">
-                    <div className="tier-progress-fill" style={{ width: `${stats.avgAtsScore}%` }}></div>
-                  </div>
-                  <div className="tier-progress-ticks">
-                    <span className="tier-tick-label">0</span>
-                    <span className="tier-tick-label">55</span>
-                    <span className="tier-tick-label">70</span>
-                    <span className="tier-tick-label">85</span>
-                    <span className="tier-tick-label">100</span>
-                  </div>
+              </div>
+
+              {/* Progress Tier bar */}
+              <div className="tier-progress-section">
+                <span className="trajectory-graph-lbl">Tier Progress</span>
+                <div className="tier-progress-track">
+                  <div className="tier-progress-fill" style={{ width: `${stats.avgAtsScore}%` }}></div>
                 </div>
-              </motion.div>
-  
-              {/* 2. Activity Feed */}
-              <motion.div className="dash-card" variants={fadeUpItem} whileHover={cardHover}>
-                <div className="activity-header">
-                  <h3 className="card-title" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
-                    Activity
-                    <span className="activity-badge">{displayActivity.length}</span>
-                  </h3>
-                  <p className="card-sub" style={{ margin: 0 }}>Recent moves across your resumes</p>
+                <div className="tier-progress-ticks">
+                  <span className="tier-tick-label">0</span>
+                  <span className="tier-tick-label">55</span>
+                  <span className="tier-tick-label">70</span>
+                  <span className="tier-tick-label">85</span>
+                  <span className="tier-tick-label">100</span>
                 </div>
-  
-                <div className="activity-feed-list">
-                  {displayActivity.map((act) => (
-                    <div key={act._id} className="activity-feed-item">
-                      <div className="activity-item-icon">
-                        {act.type === "upload" ? (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="17 8 12 3 7 8" />
-                            <line x1="12" y1="3" x2="12" y2="15" />
-                          </svg>
-                        ) : act.type === "rewrite" ? (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                          </svg>
-                        ) : (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="activity-item-desc">
-                        <span className="activity-item-title">{activityLabel(act)}</span>
-                        <span className="activity-item-sub">
-                          {act.type === "upload" ? "PDF format parsed successfully" : act.type === "rewrite" ? "Rewrites applied" : "Multi-model review finished"}
-                        </span>
-                      </div>
-                      {act.type === "analysis" && act.atsScore != null && (
-                        <span className="activity-item-score-badge">
-                          {act.atsScore}
-                        </span>
-                      )}
-                      <span className="activity-item-time">{timeAgo(act.createdAt)}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+              </div>
             </motion.div>
+
+            {/* 2. Activity Feed */}
+            <motion.div 
+              className="dash-card" 
+              variants={fadeUpItem} 
+              whileHover={cardHover}
+              onClick={() => openModal("activity", { displayActivity }, "Recent Activity Timeline")}
+              style={{ cursor: "pointer" }}
+            >
+              <div className="activity-header">
+                <h3 className="card-title" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                  Activity
+                  <span className="activity-badge">{displayActivity.length}</span>
+                </h3>
+                <p className="card-sub" style={{ margin: 0 }}>Recent moves across your resumes</p>
+              </div>
+
+              <div className="activity-feed-list">
+                {displayActivity.map((act) => (
+                  <div key={act._id} className="activity-feed-item">
+                    <div className="activity-item-icon">
+                      {act.type === "upload" ? (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                      ) : act.type === "rewrite" ? (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                      ) : (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="activity-item-desc">
+                      <span className="activity-item-title">{activityLabel(act)}</span>
+                      <span className="activity-item-sub">
+                        {act.type === "upload" ? "PDF format parsed successfully" : act.type === "rewrite" ? "Rewrites applied" : "Multi-model review finished"}
+                      </span>
+                    </div>
+                    {act.type === "analysis" && act.atsScore != null && (
+                      <span className="activity-item-score-badge">
+                        {act.atsScore}
+                      </span>
+                    )}
+                    <span className="activity-item-time">{timeAgo(act.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
         </>
       )}
+
+      {/* DASHBOARD DETAIL OVERLAY MODAL */}
+      <DashboardModal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        type={modalState.type}
+        data={modalState.data}
+        title={modalState.title}
+      />
     </div>
   );
 }

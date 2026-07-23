@@ -78,10 +78,14 @@ function Navbar({ isLoggedIn, handleLogout }) {
       </div>
       <div className="navbar-actions">
         {isLoggedIn ? (
-          <>
-            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-secondary)" }}>My Account</span>
-            <button className="btn btn-danger" onClick={onLogout} style={{ border: "1px solid var(--danger)", background: "transparent", color: "var(--danger)" }}>Logout</button>
-          </>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <Link to="/settings" className="nav-account-link" style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--navy)", textDecoration: "none", padding: "0.45rem 0.85rem", borderRadius: "8px", background: "#f8fafc", border: "1px solid rgba(0,0,0,0.06)", transition: "all 0.2s ease" }}>
+              My Account
+            </Link>
+            <button className="btn-nav-logout" onClick={onLogout} style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b", background: "transparent", border: "1px solid rgba(0,0,0,0.08)", padding: "0.45rem 0.85rem", borderRadius: "8px", cursor: "pointer", transition: "all 0.2s ease" }}>
+              Logout
+            </button>
+          </div>
         ) : (
           <>
             <Link to="/login" className="btn btn-outline" style={{ border: "1px solid var(--navy)", color: "var(--navy)" }}>Login</Link>

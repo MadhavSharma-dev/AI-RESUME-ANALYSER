@@ -1,4 +1,4 @@
-import { aiResponseSchema, buildPrompt } from "./aiSchema.js";
+import { aiResponseSchema, buildAnalysisPrompt } from "./aiSchema.js";
 import logger from "../utils/logger.js";
 
 /**
@@ -6,7 +6,7 @@ import logger from "../utils/logger.js";
  * Calls the Mistral chat completions API for resume analysis.
  * Returns null on failure (logged server-side).
  */
-export async function analyze(resumeText, targetRole) {
+export async function analyze(parsedSectionsJsonString, targetRole) {
   const apiKey = process.env.MISTRAL_API_KEY;
   if (!apiKey) {
     logger.warn("MISTRAL_API_KEY not configured — skipping Mistral");
@@ -14,7 +14,7 @@ export async function analyze(resumeText, targetRole) {
   }
 
   const url = "https://api.mistral.ai/v1/chat/completions";
-  const prompt = buildPrompt(resumeText, targetRole);
+  const prompt = buildAnalysisPrompt(parsedSectionsJsonString, targetRole);
 
   try {
     const response = await fetch(url, {
@@ -26,7 +26,7 @@ export async function analyze(resumeText, targetRole) {
       body: JSON.stringify({
         model: "mistral-small-latest",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
+        temperature: 0.0,
         response_format: { type: "json_object" }
       })
     });

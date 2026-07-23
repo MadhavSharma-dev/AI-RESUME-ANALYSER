@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchResumesList, removeResume, uploadNewResume, uploadResumeVersion } from "../../api/resumes";
 import { motion, staggerContainer, fadeUpItem, cardHover } from "../../lib/motion";
+import HeaderUtils from "../common/HeaderUtils";
 import "./Resumes.css";
 
 const UPLOADER_PHASES = [
@@ -18,8 +19,7 @@ function Resumes({ user }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   
-  // Selection / Modal state
-  const [selectedResume, setSelectedResume] = useState(null);
+  // Selection state
   const [activeVersionNumber, setActiveVersionNumber] = useState(1);
 
   // Uploader state
@@ -83,8 +83,7 @@ function Resumes({ user }) {
   };
 
   const handleOpen = (resume) => {
-    setSelectedResume(resume);
-    setActiveVersionNumber(resume.versions.length);
+    navigate(`/resumes/${resume._id}`);
   };
 
   const handleDrag = (e) => {
@@ -328,9 +327,7 @@ function Resumes({ user }) {
     r.versions.some((v) => v.targetRole?.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const activeVersion = selectedResume?.versions.find(
-    (v) => v.versionNumber === activeVersionNumber
-  ) || selectedResume?.versions[selectedResume.versions.length - 1];
+
 
   const targetUpdatingResume = queryResumeId 
     ? activeResumesList.find(r => r._id === queryResumeId)
@@ -344,23 +341,7 @@ function Resumes({ user }) {
           <h1 className="dash-overview-greeting">Hello, {displayName}.</h1>
           <p className="dash-overview-sub">Sharpen your resume with calm, focused AI insights.</p>
         </div>
-        <div className="header-utils">
-          <div className="header-search-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input 
-              type="text" 
-              placeholder="Search resumes, keywords, rewrites..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <span className="header-search-kbd">⌘ K</span>
-          </div>
-          <button className="header-btn" title="Toggle theme">🌙</button>
-          <button className="header-btn" title="Notifications">🔔</button>
-        </div>
+        <HeaderUtils searchVal={search} onSearchChange={setSearch} />
       </div>
 
       {isDemoMode && (
@@ -501,7 +482,7 @@ function Resumes({ user }) {
                   </div>
 
                   <span className="item-badge-count">
-                    🗂 {resume.versions?.length || 1} {resume.versions?.length === 1 ? "version" : "versions"}
+                    {resume.versions?.length || 1} {resume.versions?.length === 1 ? "version" : "versions"}
                   </span>
 
                   <button
@@ -524,186 +505,7 @@ function Resumes({ user }) {
         </div>
       </motion.div>
 
-      {/* ===== DETAILED REPORT SLIDE-OVER MODAL ===== */}
-      {selectedResume && (
-        <div className="dash-modal-overlay" onClick={() => setSelectedResume(null)}>
-          <div className="dash-modal-card" onClick={(e) => e.stopPropagation()}>
-            <button className="dash-modal-close" onClick={() => setSelectedResume(null)}>✕</button>
-            <h2 className="dash-modal-title" title={selectedResume.name}>
-              {selectedResume.name.replace(/\.[^.]+$/, "")}
-            </h2>
 
-            {/* Version Selection Row */}
-            <div className="version-select-row">
-              {selectedResume.versions.map((ver) => (
-                <button
-                  key={ver.versionNumber}
-                  className={`version-pill ${activeVersionNumber === ver.versionNumber ? "active" : ""}`}
-                  onClick={() => setActiveVersionNumber(ver.versionNumber)}
-                >
-                  V{ver.versionNumber} ({ver.overallScore}%)
-                </button>
-              ))}
-
-              <button
-                className="btn-add-version"
-                onClick={() => {
-                  setSelectedResume(null);
-                  navigate(`/resumes?resumeId=${selectedResume._id}`);
-                }}
-              >
-                ＋ New Version
-              </button>
-            </div>
-
-            {activeVersion && (
-              <div className="modal-details-grid">
-                {/* Left Side: Score & Breakdown */}
-                <div className="modal-scores-pane">
-                  <span className="modal-score-lbl">Overall Score</span>
-                  <span className="modal-score-num">{activeVersion.overallScore}%</span>
-                  <span className="modal-score-lbl" style={{ marginTop: "1rem" }}>ATS Score</span>
-                  <span className="modal-score-num" style={{ fontSize: "2rem", color: "var(--gold)" }}>
-                    {activeVersion.atsScore}%
-                  </span>
-
-                  {/* Comparative Model Scores Comparison Badge */}
-                  {activeVersion.modelScores && (
-                    <div style={{ marginTop: "1.25rem", width: "100%", borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: "1.25rem" }}>
-                      <span className="modal-score-lbl" style={{ fontSize: "0.65rem", display: "block", marginBottom: "0.6rem", letterSpacing: "0.5px" }}>Model Comparisons</span>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: "0.4rem" }}>
-                        <div style={{ background: "rgba(31, 42, 68, 0.03)", border: "1px solid rgba(31, 42, 68, 0.05)", padding: "0.4rem 0.2rem", borderRadius: "8px", flex: 1, textAlign: "center" }}>
-                          <div style={{ fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", opacity: 0.6 }}>Gemini</div>
-                          <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--text-primary)" }}>{activeVersion.modelScores.gemini}%</div>
-                        </div>
-                        <div style={{ background: "rgba(31, 42, 68, 0.03)", border: "1px solid rgba(31, 42, 68, 0.05)", padding: "0.4rem 0.2rem", borderRadius: "8px", flex: 1, textAlign: "center" }}>
-                          <div style={{ fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", opacity: 0.6 }}>Groq</div>
-                          <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--text-primary)" }}>{activeVersion.modelScores.groq}%</div>
-                        </div>
-                        <div style={{ background: "rgba(31, 42, 68, 0.03)", border: "1px solid rgba(31, 42, 68, 0.05)", padding: "0.4rem 0.2rem", borderRadius: "8px", flex: 1, textAlign: "center" }}>
-                          <div style={{ fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", opacity: 0.6 }}>Mistral</div>
-                          <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--text-primary)" }}>{activeVersion.modelScores.mistral}%</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Progress bars */}
-                  <div style={{ width: "100%", marginTop: "1.5rem", textAlign: "left" }}>
-                    {[
-                      { label: "Keywords", key: "keywords" },
-                      { label: "Formatting", key: "format" },
-                      { label: "Impact", key: "impact" },
-                      { label: "Readability", key: "readability" }
-                    ].map(({ label, key }) => (
-                      <div key={key} style={{ marginBottom: "0.8rem" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                          <span>{label}</span>
-                          <span>{activeVersion.breakdown?.[key] ?? 50}%</span>
-                        </div>
-                        <div style={{ height: "6px", width: "100%", backgroundColor: "rgba(31,42,68,0.06)", borderRadius: "3px", marginTop: "0.2rem" }}>
-                          <div style={{ height: "100%", width: `${activeVersion.breakdown?.[key] ?? 50}%`, backgroundColor: "var(--navy)", borderRadius: "3px" }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Right Side: AI Feedback Details */}
-                <div className="modal-analysis-pane">
-                  <div className="modal-feedback-box" style={{ marginTop: 0 }}>
-                    <h4>🎯 Target Role</h4>
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: 700, margin: "0.2rem 0 0 0" }}>
-                      {activeVersion.targetRole}
-                    </p>
-                  </div>
-
-                  <div className="modal-feedback-box" style={{ marginTop: 0 }}>
-                    <h4>💪 core strengths</h4>
-                    <ul className="modal-feedback-list">
-                      {activeVersion.strengths?.map((str, idx) => (
-                        <li key={idx}>{str}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="modal-feedback-box" style={{ marginTop: 0 }}>
-                    <h4>📈 areas to improve</h4>
-                    <ul className="modal-feedback-list">
-                      {activeVersion.improvements?.map((imp, idx) => (
-                        <li key={idx}>{imp}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="modal-feedback-box" style={{ marginTop: 0 }}>
-                    <h4>🔍 missing keyword gaps</h4>
-                    <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
-                      {activeVersion.keywordGaps?.map((gap, idx) => (
-                        <span
-                          key={idx}
-                          style={{
-                            fontSize: "0.7rem",
-                            fontWeight: 700,
-                            backgroundColor: "var(--beige-light)",
-                            color: "var(--navy)",
-                            padding: "0.25rem 0.6rem",
-                            borderRadius: "99px"
-                          }}
-                        >
-                          {gap}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Bullet Rewrites comparison */}
-            {activeVersion && activeVersion.beforeAfterRewrites?.length > 0 && (
-              <div style={{ marginTop: "1.5rem" }}>
-                <h3 style={{ fontFamily: "var(--font-display)", color: "var(--navy)", fontSize: "1.1rem", marginBottom: "1.1rem" }}>
-                  Before & After Bullet Rewrites
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {activeVersion.beforeAfterRewrites.map((rewrite, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: "1.25rem",
-                        backgroundColor: "var(--bg-secondary, #faf9f6)",
-                        padding: "1.25rem",
-                        borderRadius: "12px",
-                        border: "1px solid rgba(0,0,0,0.03)"
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontSize: "0.6rem", fontWeight: 800, textTransform: "uppercase", color: "#e53e6d", display: "block", marginBottom: "0.35rem" }}>
-                          Original
-                        </span>
-                        <p style={{ fontSize: "0.75rem", margin: 0, textDecoration: "line-through", color: "var(--text-secondary)" }}>
-                          {rewrite.before}
-                        </p>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: "0.6rem", fontWeight: 800, textTransform: "uppercase", color: "#C6A75E", display: "block", marginBottom: "0.35rem" }}>
-                          Roaster Rewrite
-                        </span>
-                        <p style={{ fontSize: "0.75rem", margin: 0, color: "var(--navy)", fontWeight: 600 }}>
-                          {rewrite.after}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ===== FULL-SCREEN LOADING POPUP OVERLAY ===== */}
       {isUploading && (

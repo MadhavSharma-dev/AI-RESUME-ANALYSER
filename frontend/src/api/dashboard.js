@@ -14,3 +14,8 @@ export const backfillActivity = async () => {
   const res = await client.post('/activity/backfill');
   return res.data;
 };
+
+export const fetchDashboardOverview = async () => {
+  const res = await client.get('/analytics/overview');
+  return res.data;
+};

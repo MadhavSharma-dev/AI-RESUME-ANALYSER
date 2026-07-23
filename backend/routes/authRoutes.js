@@ -7,11 +7,15 @@ import {
   appleLogin,
   refreshAccessToken,
   logoutUser,
-  getUserProfile
+  getUserProfile,
+  updateUserProfile,
+  uploadAvatar,
+  getUserStats
 } from "../controllers/authController.js";
 import requireAuth from "../middleware/authMiddleware.js";
 import validate from "../middleware/validate.js";
 import { authLimiter } from "../middleware/rateLimiter.js";
+import { avatarUpload } from "../middleware/imageUpload.js";
 
 const router = express.Router();
 
@@ -44,5 +48,8 @@ router.post("/logout", logoutUser);
 
 // Protected
 router.get("/profile", requireAuth, getUserProfile);
+router.put("/profile", requireAuth, updateUserProfile);
+router.post("/avatar", requireAuth, avatarUpload.single("avatar"), uploadAvatar);
+router.get("/stats", requireAuth, getUserStats);
 
 export default router;

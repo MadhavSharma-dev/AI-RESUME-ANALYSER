@@ -9,8 +9,10 @@ import {
   addResumeVersion,
   getResumes,
   getResumeById,
-  deleteResume
+  deleteResume,
+  reAnalyze
 } from "../controllers/resumeController.js";
+import { exportFeedbackPdf } from "../controllers/pdfExportController.js";
 
 const router = express.Router();
 
@@ -46,6 +48,12 @@ router.post(
 
 // Get specific resume by ID — validated ID
 router.get("/:id", requireAuth, validate(idSchema), getResumeById);
+
+// Re-analyze specific resume by ID — validated ID
+router.post("/:id/analyze", requireAuth, validate(idSchema), reAnalyze);
+
+// Export feedback PDF by ID
+router.get("/:id/export-pdf", requireAuth, validate(idSchema), exportFeedbackPdf);
 
 // Delete resume by ID — validated ID
 router.delete("/:id", requireAuth, validate(idSchema), deleteResume);

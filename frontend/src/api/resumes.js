@@ -26,7 +26,20 @@ export const uploadResumeVersion = async (id, file, targetRole) => {
   return res.data;
 };
 
+export const runAnalysis = async (id, versionNumber, targetRole, force = true) => {
+  const res = await client.post(`/resumes/${id}/analyze`, { versionNumber, targetRole, force });
+  return res.data;
+};
+
 export const removeResume = async (id) => {
   const res = await client.delete(`/resumes/${id}`);
+  return res.data;
+};
+
+export const exportResumeFeedbackPdf = async (id, versionNumber, analysisId) => {
+  const res = await client.get(`/resumes/${id}/export-pdf`, {
+    params: { versionNumber, analysisId },
+    responseType: 'blob'
+  });
   return res.data;
 };

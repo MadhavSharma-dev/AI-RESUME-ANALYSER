@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema(
       minlength: 8,
       select: false  // SECURITY: Never returned in queries by default
     },
+    avatarUrl: { type: String, default: null },
     authProvider: {
       type: String,
       enum: ['local', 'google', 'apple'],

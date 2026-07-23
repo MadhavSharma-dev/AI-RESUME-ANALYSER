@@ -1,18 +1,25 @@
-export function ScoreEvolutionChart({ versionScores }) {
-  // Ensure we have at least 3 points, fallback to placeholder layout
-  const scores = versionScores?.length >= 2 ? versionScores : [58, 74, 86];
-  
-  // Calculate SVG coordinates
-  // Viewbox: 0 0 460 120
+export function ScoreEvolutionChart({ dataPoints, versionScores, onPointClick }) {
+  // If dataPoints provided (from real backend overview), use them; otherwise fallback to versionScores or default
+  const rawList = dataPoints?.length > 0 
+    ? dataPoints 
+    : (versionScores?.length >= 2 ? versionScores.map((s, idx) => ({ atsScore: s, versionNumber: idx + 1 })) : [
+        { atsScore: 58, versionNumber: 1, resumeName: "Senior Frontend Engineer Resume" },
+        { atsScore: 74, versionNumber: 2, resumeName: "Senior Frontend Engineer Resume" },
+        { atsScore: 86, versionNumber: 3, resumeName: "Senior Frontend Engineer Resume" }
+      ]);
+
   const paddingX = 40;
   const graphWidth = 380;
   const graphHeight = 80;
   const bottomY = 100;
-  
-  const points = scores.map((score, index) => {
-    const x = paddingX + (index / (scores.length - 1)) * graphWidth;
+
+  const points = rawList.map((item, index) => {
+    const score = item.atsScore ?? item.overallScore ?? 0;
+    const x = rawList.length === 1 
+      ? paddingX + graphWidth / 2 
+      : paddingX + (index / (rawList.length - 1)) * graphWidth;
     const y = bottomY - (score / 100) * graphHeight;
-    return { x, y, score };
+    return { x, y, score, item, label: item.versionNumber ? `V${item.versionNumber}` : `#${index + 1}` };
   });
 
   const lineD = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
@@ -40,16 +47,20 @@ export function ScoreEvolutionChart({ versionScores }) {
 
       {/* Markers & Labels */}
       {points.map((p, idx) => (
-        <g key={idx}>
+        <g 
+          key={idx} 
+          style={{ cursor: "pointer" }}
+          onClick={() => onPointClick && onPointClick(p.item)}
+        >
           {/* Label score above */}
           <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="0.75rem" fontWeight="800" fill="var(--navy)">
             {p.score}
           </text>
           {/* Inner circle */}
-          <circle cx={p.x} cy={p.y} r="5" fill="#C6A75E" stroke="#ffffff" strokeWidth="2" />
+          <circle cx={p.x} cy={p.y} r="6" fill="#C6A75E" stroke="#ffffff" strokeWidth="2" />
           {/* Version text below */}
           <text x={p.x} y="115" textAnchor="middle" fontSize="0.65rem" fontWeight="700" fill="var(--text-secondary)">
-            V{idx + 1}
+            {p.label}
           </text>
         </g>
       ))}

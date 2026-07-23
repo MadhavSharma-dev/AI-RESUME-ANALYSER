@@ -35,6 +35,25 @@ export const getProfile = async () => {
   return res.data;
 };
 
+export const updateProfile = async (name, email) => {
+  const res = await client.put('/auth/profile', { name, email });
+  return res.data;
+};
+
+export const uploadAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  const res = await client.post('/auth/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+};
+
+export const getUserStats = async () => {
+  const res = await client.get('/auth/stats');
+  return res.data;
+};
+
 export const refreshSession = async () => {
   const res = await client.post('/auth/refresh');
   if (res.data.accessToken) setAccessToken(res.data.accessToken);

@@ -12,10 +12,10 @@ const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx"];
 
 const LOADING_PHASES = [
   "Extracting document text layout...",
-  "Roasting formatting structures...",
-  "Comparing skills against target role...",
+  "Roasting formatting structures & cliché buzzwords...",
+  "Searing weak points against target role...",
   "Quantifying achievements and metrics...",
-  "Re-writing weak work history bullets..."
+  "Applying ensemble AI roast magic..."
 ];
 
 function UploadResume() {
@@ -179,9 +179,8 @@ function UploadResume() {
               className="btn-submit"
               onClick={handleUpload}
               disabled={!selectedFile}
-              style={{ marginTop: "1rem" }}
             >
-              {resumeId ? "Roast New Version" : "Analyze Resume"}
+              {resumeId ? "Roast New Version" : "Roast My Resume"}
             </button>
           )}
         </div>

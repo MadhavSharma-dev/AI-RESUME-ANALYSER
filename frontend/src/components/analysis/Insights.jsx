@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchResumesList } from "../../api/resumes";
 import { motion, staggerContainer, fadeUpItem, cardHover } from "../../lib/motion";
+import HeaderUtils from "../common/HeaderUtils";
 import "./Insights.css";
 
 import { ChronologicalScoreTrend } from "./ChronologicalScoreTrend";
@@ -213,23 +214,7 @@ function Analytics({ user }) {
           <h1 className="dash-overview-greeting">Hello, {displayName}.</h1>
           <p className="dash-overview-sub">Sharpen your resume with calm, focused AI insights.</p>
         </div>
-        <div className="header-utils">
-          <div className="header-search-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input 
-              type="text" 
-              placeholder="Search resumes, keywords, rewrites..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <span className="header-search-kbd">⌘ K</span>
-          </div>
-          <button className="header-btn" title="Toggle theme">🌙</button>
-          <button className="header-btn" title="Notifications">🔔</button>
-        </div>
+        <HeaderUtils searchVal={search} onSearchChange={setSearch} />
       </div>
 
       {isDemoMode && (

@@ -1,4 +1,5 @@
-import { aiResponseSchema, buildPrompt } from "./aiSchema.js";
+import { aiResponseSchema, parsedSectionsSchema, buildAnalysisPrompt, buildParsingPrompt } from "./aiSchema.js";
+import { parseResumeWithGroq } from "./groq.js";
 import logger from "../utils/logger.js";
 
 /**
@@ -6,22 +7,24 @@ import logger from "../utils/logger.js";
  * Calls the Gemini 1.5 Flash model for resume analysis.
  * Returns null on failure (logged server-side).
  */
-export async function analyze(resumeText, targetRole) {
+export async function analyze(parsedSectionsJsonString, targetRole) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     logger.warn("GEMINI_API_KEY not configured — skipping Gemini");
     return null;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-  const prompt = buildPrompt(resumeText, targetRole);
+  const model = (process.env.GEMINI_MODEL || "gemini-2.0-flash").trim();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const prompt = buildAnalysisPrompt(parsedSectionsJsonString, targetRole);
 
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.0 }
       })
     });
 
@@ -55,4 +58,75 @@ export async function analyze(resumeText, targetRole) {
     logger.error({ err: error.message }, "Gemini analysis failed");
     return null;
   }
+}
+
+/**
+ * Parses raw text into structured ParsedSections JSON.
+ * Robust multi-provider fallback: Gemini -> Groq -> Default JSON.
+ */
+export async function parseResume(resumeText) {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      const model = (process.env.GEMINI_MODEL || "gemini-2.0-flash").trim();
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const prompt = buildParsingPrompt(resumeText);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        let resultText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+        if (resultText.includes("```json")) {
+          resultText = resultText.split("```json")[1].split("```")[0];
+        } else if (resultText.includes("```")) {
+          resultText = resultText.split("```")[1].split("```")[0];
+        }
+
+        const parsed = JSON.parse(resultText.trim());
+        const validated = parsedSectionsSchema.safeParse(parsed);
+        
+        if (validated.success) {
+          return validated.data;
+        }
+        return parsed; // Best effort
+      }
+      logger.warn({ status: response.status }, "Gemini API HTTP error during parsing — attempting Groq fallback");
+    }
+  } catch (err) {
+    logger.warn({ err: err.message }, "Gemini parsing failed — attempting Groq fallback");
+  }
+
+  // Fallback 1: Groq parsing
+  try {
+    const groqParsed = await parseResumeWithGroq(resumeText);
+    if (groqParsed) {
+      logger.info("Resume successfully parsed using Groq fallback!");
+      return groqParsed;
+    }
+  } catch (groqErr) {
+    logger.error({ err: groqErr.message }, "Groq parsing fallback failed");
+  }
+
+  // Fallback 2: Basic structured object
+  return {
+    name: "Extracted Candidate",
+    title: "Resume Profile",
+    contact: {},
+    summary: resumeText.substring(0, 300),
+    experience: [{ role: "Professional Experience", company: "Work History", dates: "", description: resumeText.substring(0, 1000) }],
+    education: [],
+    skills: [],
+    projects: [],
+    certifications: [],
+    languages: [],
+    interests: []
+  };
 }

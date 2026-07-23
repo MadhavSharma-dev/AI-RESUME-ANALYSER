@@ -2,34 +2,12 @@ import mongoose from "mongoose";
 
 const versionSchema = new mongoose.Schema({
   versionNumber: { type: Number, required: true },
-  storagePath: { type: String, required: true },   // UUID-based path on disk
-  fileName: { type: String, required: true },       // Original filename (display only)
-  mimeType: { type: String, required: true },       // MIME type for parsing
-  targetRole: { type: String, default: "General" },
-  rawText: { type: String, select: false },         // Parsed text — not returned by default
-  overallScore: { type: Number, default: 0 },
-  atsScore: { type: Number, default: 0 },
-  modelScores: {
-    gemini: { type: Number, default: 0 },
-    groq: { type: Number, default: 0 },
-    mistral: { type: Number, default: 0 }
-  },
-  breakdown: {
-    keywords: { type: Number, default: 0 },
-    format: { type: Number, default: 0 },
-    impact: { type: Number, default: 0 },
-    readability: { type: Number, default: 0 }
-  },
-  strengths: [{ type: String }],
-  improvements: [{ type: String }],
-  keywordGaps: [{ type: String }],
-  toneAssessment: { type: String, default: "" },
-  beforeAfterRewrites: [
-    {
-      before: { type: String },
-      after: { type: String }
-    }
-  ],
+  storagePath: { type: String, required: true },
+  fileName: { type: String, required: true },
+  mimeType: { type: String, required: true },
+  targetRole: { type: String, default: "General" }, // The role provided during the original upload
+  rawText: { type: String, select: false },
+  parsedSections: { type: mongoose.Schema.Types.Mixed }, // Structured JSON extracted by Gemini parsing step
   createdAt: { type: Date, default: Date.now }
 });
 

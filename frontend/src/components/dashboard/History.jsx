@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchActivity, backfillActivity } from "../../api/dashboard";
+import HeaderUtils from "../common/HeaderUtils";
 import "./History.css";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -140,36 +141,7 @@ function History({ user }) {
           <p className="hist-subtitle">Sharpen your resume with calm, focused AI insights.</p>
         </div>
 
-        <div className="hist-header-right">
-          <div className="hist-search-wrap">
-            <svg className="hist-search-icon" viewBox="0 0 20 20" fill="none">
-              <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M13.5 13.5L17 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <input
-              className="hist-search"
-              type="text"
-              placeholder="Search resumes, keywords, rewrites..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <span className="hist-search-kbd">⌘ K</span>
-          </div>
-
-          <button className="hist-icon-btn" title="Toggle theme">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-          </button>
-
-          <button className="hist-icon-btn" title="Notifications">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-            <span className="hist-notif-dot" />
-          </button>
-        </div>
+        <HeaderUtils searchVal={search} onSearchChange={setSearch} />
       </div>
 
       {/* ── Section heading ── */}
