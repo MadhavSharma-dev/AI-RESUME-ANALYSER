@@ -1,31 +1,45 @@
+import { IS_PROD } from "../config/env.js";
+import ApiError from "../utils/apiErrors.js";
 import logger from "../utils/logger.js";
 
-/**
- * Global error handler — catches all unhandled errors from routes/middleware.
- * Returns a generic message to the client; logs the full error server-side.
- * Never leaks stack traces, internal file paths, or DB error details.
- */
-const errorHandler = (err, req, res, _next) => {
-  // If response already started, delegate to Express default
-  if (res.headersSent) {
-    return _next(err);
+export const notFound = (req, res, next) => {
+  next(ApiError.notFound(`Route ${req.method} ${req.originalUrl} not found`));
+};
+
+export const errorHandler = (err, req, res, _next) => {
+  let status = err.statusCode || 500;
+  let message = err.message || "Internal server error";
+  let details = err.details;
+
+  if (err.name === "ValidationError" && err.errors) {
+    status = 400;
+    details = Object.fromEntries(
+      Object.entries(err.errors).map(([k, v]) => [k, v.message])
+    );
+    message = "Validation failed";
+  } else if (err.name === "CastError") {
+    status = 400;
+    message = `Invalid ${err.path}: ${err.value}`;
+  } else if (err.code === 11000) {
+    status = 409;
+    message = "Duplicate key";
+    details = err.keyValue;
+  } else if (err.name === "ZodError") {
+    status = 400;
+    message = "Validation failed";
+    details = err.issues;
   }
 
-  const statusCode = res.statusCode && res.statusCode >= 400 ? res.statusCode : 500;
+  if (status >= 500) {
+    logger.error(`[${req.method} ${req.originalUrl}]`, err);
+  }
 
-  // Log full error details server-side
-  logger.error({
-    err: err.message,
-    stack: err.stack,
-    method: req.method,
-    url: req.originalUrl,
-    statusCode
-  }, "Unhandled error");
-
-  res.status(statusCode).json({
-    message: process.env.NODE_ENV === "production"
-      ? "An unexpected error occurred"
-      : err.message || "An unexpected error occurred"
+  res.status(status).json({
+    error: {
+      message,
+      ...(details ? { details } : {}),
+      ...(IS_PROD ? {} : { stack: err.stack }),
+    }
   });
 };
 

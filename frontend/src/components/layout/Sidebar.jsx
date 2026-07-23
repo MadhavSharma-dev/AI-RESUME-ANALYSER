@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { sidebarLinkHover } from "../../lib/motion";
 import "./Sidebar.css";
 
-const MotionNavLink = motion(NavLink);
+const MotionNavLink = motion.create(NavLink);
 
 const NAV_ITEMS = [
   {

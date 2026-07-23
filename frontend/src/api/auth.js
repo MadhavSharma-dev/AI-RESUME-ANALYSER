@@ -12,6 +12,18 @@ export const signup = async (name, email, password) => {
   return res.data;
 };
 
+export const googleOAuthLogin = async (credential) => {
+  const res = await client.post('/auth/google', { credential });
+  if (res.data.accessToken) setAccessToken(res.data.accessToken);
+  return res.data;
+};
+
+export const appleOAuthLogin = async (identityToken, user) => {
+  const res = await client.post('/auth/apple', { identityToken, user });
+  if (res.data.accessToken) setAccessToken(res.data.accessToken);
+  return res.data;
+};
+
 export const logout = async () => {
   const res = await client.post('/auth/logout');
   clearAccessToken();

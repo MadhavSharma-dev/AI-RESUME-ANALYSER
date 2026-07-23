@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { GoogleLogin } from '@react-oauth/google';
+import AppleSignin from 'react-apple-signin-auth';
 import "./Auth.css";
-import { signup } from "../../api/auth";
+import { signup, googleOAuthLogin, appleOAuthLogin } from "../../api/auth";
 
 function Signup({ handleLogin }) {
   const navigate = useNavigate();
@@ -50,6 +52,28 @@ function Signup({ handleLogin }) {
           }
         } else if (err.message) {
           msg = err.message;
+        }
+        alert(msg);
+      });
+  };
+
+  const handleOAuthSuccess = (apiCall, data) => {
+    apiCall(data)
+      .then((res) => {
+        setIsExiting(true);
+        setTimeout(() => {
+          if (handleLogin) {
+            handleLogin({ name: res.name, email: res.email });
+            navigate("/dashboard");
+          } else {
+            navigate("/login");
+          }
+        }, 650);
+      })
+      .catch((err) => {
+        let msg = "OAuth Registration failed. Please try again.";
+        if (err.response?.data) {
+          msg = err.response.data.message || msg;
         }
         alert(msg);
       });
@@ -139,6 +163,47 @@ function Signup({ handleLogin }) {
               </svg>
             </button>
           </form>
+
+          <div className="auth-separator">
+            <span className="auth-separator-text">or continue with</span>
+          </div>
+
+          <div className="auth-oauth-group">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                handleOAuthSuccess(googleOAuthLogin, credentialResponse.credential);
+              }}
+              onError={() => {
+                alert('Google Registration Failed');
+              }}
+              theme="filled_black"
+              shape="rectangular"
+              width="100%"
+              text="signup_with"
+            />
+
+            <AppleSignin
+              authOptions={{
+                clientId: import.meta.env.VITE_APPLE_CLIENT_ID || 'com.example.web',
+                scope: 'email name',
+                redirectURI: 'https://example.com',
+                state: 'state',
+                nonce: 'nonce',
+                usePopup: true
+              }}
+              onSuccess={(response) => handleOAuthSuccess(appleOAuthLogin, response.authorization.id_token)}
+              onError={(error) => console.error(error)}
+              skipScript={false}
+              render={(props) => (
+                <button {...props} type="button" className="btn-auth-apple">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px' }}>
+                    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.641-.026 2.669-1.48 3.666-2.94 1.16-1.693 1.636-3.337 1.652-3.421-.035-.015-3.213-1.233-3.238-4.908-.022-3.076 2.512-4.542 2.628-4.608-1.436-2.097-3.649-2.383-4.436-2.417-1.921-.186-3.921 1.23-4.557 1.23zm-.745-1.503c.833-1.01 1.393-2.41 1.24-3.805-1.186.048-2.65.787-3.498 1.785-.758.895-1.42 2.315-1.247 3.69 1.336.104 2.672-.652 3.505-1.67z" />
+                  </svg>
+                  Sign up with Apple
+                </button>
+              )}
+            />
+          </div>
 
           <p className="auth-footer-nav">
             Already have an account? <Link to="/login">Sign in</Link>

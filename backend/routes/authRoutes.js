@@ -3,6 +3,8 @@ import { z } from "zod";
 import {
   signupUser,
   loginUser,
+  googleLogin,
+  appleLogin,
   refreshAccessToken,
   logoutUser,
   getUserProfile
@@ -35,6 +37,8 @@ const loginSchema = z.object({
 // Public — rate-limited
 router.post("/signup", authLimiter, validate(signupSchema), signupUser);
 router.post("/login", authLimiter, validate(loginSchema), loginUser);
+router.post("/google", authLimiter, googleLogin);
+router.post("/apple", authLimiter, appleLogin);
 router.post("/refresh", refreshAccessToken);
 router.post("/logout", logoutUser);
 

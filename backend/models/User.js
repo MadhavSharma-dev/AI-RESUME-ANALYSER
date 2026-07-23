@@ -15,9 +15,24 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function() { return this.authProvider === 'local'; },
       minlength: 8,
       select: false  // SECURITY: Never returned in queries by default
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google', 'apple'],
+      default: 'local'
+    },
+    googleId: {
+      type: String,
+      sparse: true,
+      unique: true
+    },
+    appleId: {
+      type: String,
+      sparse: true,
+      unique: true
     },
     refreshTokenHash: {
       type: String,
@@ -30,6 +45,7 @@ const userSchema = new mongoose.Schema(
 
 // Method to verify password match
 userSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

@@ -8,7 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
-import errorHandler from "./middleware/errorHandler.js";
+import errorHandler, { notFound } from "./middleware/errorHandler.js";
 import { generalLimiter } from "./middleware/rateLimiter.js";
 import logger from "./utils/logger.js";
 
@@ -33,10 +33,12 @@ const app = express();
 // ─── Security Middleware ────────────────────────────────────────────
 app.use(helmet()); // Secure HTTP headers (HSTS, X-Content-Type-Options, etc.)
 
+import { CLIENT_ORIGINS } from "./config/env.js";
+
 // CORS locked to known frontend origin — NOT *
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: CLIENT_ORIGINS,
     credentials: true // Required for httpOnly cookie exchange
   })
 );
@@ -61,6 +63,9 @@ app.use("/api/analytics", analyticsRoutes);
 app.get("/", (_req, res) => {
   res.json({ status: "healthy", service: "Resume Roaster API" });
 });
+
+// Catch 404 and forward to error handler
+app.use(notFound);
 
 // ─── Global Error Handler ───────────────────────────────────────────
 // Must be registered LAST — catches all unhandled errors.
