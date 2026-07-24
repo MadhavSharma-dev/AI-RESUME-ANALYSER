@@ -115,3 +115,32 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
+
+@media (max-width: 768px) {
+  .global-header-utils {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .gh-search-wrap {
+    flex: 1;
+  }
+
+  .gh-search-box {
+    width: 100% !important;
+    min-height: 44px;
+    padding: 0.4rem 0.85rem;
+  }
+
+  .gh-search-box:focus-within {
+    width: 100% !important;
+  }
+
+  .gh-about-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.4rem 0.85rem;
+    justify-content: center;
+  }
+}

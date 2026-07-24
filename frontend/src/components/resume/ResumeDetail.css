@@ -775,3 +775,59 @@
   color: white;
   font-weight: 600;
 }
+
+/* RESPONSIVE MEDIA QUERIES FOR RESUME DETAIL (375px - 1024px) */
+@media (max-width: 1024px) {
+  .resume-detail-container {
+    padding: 1.5rem;
+  }
+
+  .detail-hero-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detail-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .resume-detail-container {
+    padding: 1rem;
+  }
+
+  .detail-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rd-header-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .rd-tabs-header {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rd-tab {
+    flex: 0 0 auto;
+    padding: 0.85rem 1.25rem;
+    min-height: 44px;
+  }
+
+  .rewrite-item-comparison {
+    flex-direction: column;
+  }
+
+  .parsed-sections-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pdf-modal-content {
+    width: 95vw;
+    height: 90vh;
+  }
+}

@@ -62,67 +62,97 @@ function Sidebar({ user }) {
     : "U";
 
   return (
-    <aside className="sidebar">
-      {/* Logo */}
-      <div className="sidebar-logo">
-        <img src={favIcon} alt="Resume Roaster" className="sidebar-logo-img" />
-      </div>
+    <>
+      <aside className="sidebar">
+        {/* Logo */}
+        <div className="sidebar-logo">
+          <img src={favIcon} alt="Resume Roaster" className="sidebar-logo-img" />
+        </div>
 
-      {/* Nav links */}
-      <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
-          <div key={item.to} className="sidebar-tooltip-wrapper">
+        {/* Nav links */}
+        <nav className="sidebar-nav">
+          {NAV_ITEMS.map((item) => (
+            <div key={item.to} className="sidebar-tooltip-wrapper">
+              <MotionNavLink
+                to={item.to}
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? "active" : ""}`}
+                aria-label={item.tooltip}
+                whileHover={sidebarLinkHover}
+              >
+                {item.icon}
+              </MotionNavLink>
+              <span className="sidebar-tooltip">{item.tooltip}</span>
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom: settings + profile avatar */}
+        <div className="sidebar-bottom">
+          {/* Settings */}
+          <div className="sidebar-tooltip-wrapper">
             <MotionNavLink
-              to={item.to}
+              to="/settings"
               className={({ isActive }) => `sidebar-nav-item ${isActive ? "active" : ""}`}
-              aria-label={item.tooltip}
+              aria-label="Settings"
               whileHover={sidebarLinkHover}
             >
-              {item.icon}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
             </MotionNavLink>
-            <span className="sidebar-tooltip">{item.tooltip}</span>
+            <span className="sidebar-tooltip">Settings</span>
           </div>
-        ))}
-      </nav>
 
-      {/* Bottom: settings + profile avatar */}
-      <div className="sidebar-bottom">
-        {/* Settings */}
-        <div className="sidebar-tooltip-wrapper">
-          <MotionNavLink
-            to="/settings"
-            className={({ isActive }) => `sidebar-nav-item ${isActive ? "active" : ""}`}
-            aria-label="Settings"
-            whileHover={sidebarLinkHover}
+          {/* Profile Avatar */}
+          <div className="sidebar-tooltip-wrapper">
+            <MotionNavLink
+              to="/settings"
+              className={({ isActive }) => `sidebar-avatar-link ${isActive ? "active" : ""}`}
+              aria-label="Your Profile"
+              whileHover={{ scale: 1.08 }}
+            >
+              <div className="sidebar-avatar">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name || "Avatar"} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                ) : (
+                  initials
+                )}
+              </div>
+            </MotionNavLink>
+            <span className="sidebar-tooltip">Your Profile</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* Touch-Friendly Mobile Bottom Nav for <= 768px */}
+      <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
+        {NAV_ITEMS.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) => `mobile-bottom-item ${isActive ? "active" : ""}`}
+            aria-label={item.label}
           >
+            <div className="mobile-bottom-icon">{item.icon}</div>
+            <span className="mobile-bottom-label">{item.label}</span>
+          </NavLink>
+        ))}
+        <NavLink
+          to="/settings"
+          className={({ isActive }) => `mobile-bottom-item ${isActive ? "active" : ""}`}
+          aria-label="Settings"
+        >
+          <div className="mobile-bottom-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
-          </MotionNavLink>
-          <span className="sidebar-tooltip">Settings</span>
-        </div>
-
-        {/* Profile Avatar — FIX 2: Navigates to /settings (Your Profile) */}
-        <div className="sidebar-tooltip-wrapper">
-          <MotionNavLink
-            to="/settings"
-            className={({ isActive }) => `sidebar-avatar-link ${isActive ? "active" : ""}`}
-            aria-label="Your Profile"
-            whileHover={{ scale: 1.08 }}
-          >
-            <div className="sidebar-avatar">
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name || "Avatar"} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-              ) : (
-                initials
-              )}
-            </div>
-          </MotionNavLink>
-          <span className="sidebar-tooltip">Your Profile</span>
-        </div>
-      </div>
-    </aside>
+          </div>
+          <span className="mobile-bottom-label">Settings</span>
+        </NavLink>
+      </nav>
+    </>
   );
 }
 

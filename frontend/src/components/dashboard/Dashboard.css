@@ -759,3 +759,51 @@
   cursor: pointer;
   margin-left: auto;
 }
+
+/* RESPONSIVE MEDIA QUERIES FOR DASHBOARD (375px - 1024px) */
+@media (max-width: 1024px) {
+  .dash-container {
+    padding: 1.5rem;
+  }
+
+  .dash-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-middle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dash-container {
+    padding: 1rem;
+  }
+
+  .dash-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-header-left h1 {
+    font-size: 1.4rem;
+  }
+
+  .nodes-scroller-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .node-card {
+    width: 100%;
+  }
+
+  .demo-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .demo-banner-btn {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}

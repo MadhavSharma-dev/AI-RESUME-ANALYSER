@@ -385,3 +385,30 @@
   color: #ffffff;
   border-color: #ffffff;
 }
+
+/* RESPONSIVE MEDIA QUERIES FOR ABOUT PAGE (375px - 1024px) */
+@media (max-width: 1024px) {
+  .about-container {
+    padding: 1.5rem;
+  }
+
+  .makers-grid {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-container {
+    padding: 1rem;
+  }
+
+  .about-title {
+    font-size: 1.5rem;
+  }
+
+  .guarantees-grid {
+    grid-template-columns: 1fr;
+  }
+}
