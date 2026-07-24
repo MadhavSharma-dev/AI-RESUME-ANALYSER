@@ -70,10 +70,10 @@ function App() {
   return (
     <>
       {isLoggedIn && useAppShell ? (
-        <div className="app-main-layout">
+        <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-primary)" }}>
           <Sidebar handleLogout={handleLogout} user={user} />
-          <div className="app-main-content">
-            <AppRoutes isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} user={user} onUpdateUser={(u) => setUser(u)} />
+          <div style={{ marginLeft: "120px", flex: 1, display: "flex", flexDirection: "column" }}>
+              <AppRoutes isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} user={user} onUpdateUser={(u) => setUser(u)} />
           </div>
         </div>
       ) : (

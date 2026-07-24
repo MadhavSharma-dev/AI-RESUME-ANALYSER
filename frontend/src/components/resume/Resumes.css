@@ -426,29 +426,3 @@
   background: rgba(0, 0, 0, 0.05);
   color: var(--text-secondary);
 }
-
-/* RESPONSIVE MEDIA QUERIES FOR RESUMES VAULT & UPLOAD (375px - 1024px) */
-@media (max-width: 1024px) {
-  .resumes-container {
-    padding: 1.5rem;
-  }
-
-  .resumes-grid-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 600px) {
-  .resumes-container {
-    padding: 1rem;
-  }
-
-  .resumes-header-title {
-    font-size: 1.4rem;
-  }
-
-  .item-btn-delete {
-    min-width: 44px;
-    min-height: 44px;
-  }
-}
