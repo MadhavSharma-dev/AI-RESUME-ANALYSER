@@ -127,15 +127,17 @@ export default function About() {
                     <h3>Prashant Kumar</h3>
                     <span className="maker-role">Fullstack Developer</span>
                     <p className="maker-bio">
-                      Specializing in multi-model AI consensus pipelines (Gemini + Groq + Mistral), backend microservices, and automated resume analysis engines.
+                      Full Stack Developer specializing in MERN/PERN stacks, RESTful APIs, and JWT authentication. Brings prior experience building an AI-powered resume analysis platform straight into architecting Resume Roaster's fullstack and AI-integration backbone.
                     </p>
                     <div className="maker-tech-chips">
                       <span>React</span>
                       <span>Node.js</span>
                       <span>Express</span>
                       <span>MongoDB</span>
-                      <span>Gemini AI</span>
-                      <span>Groq</span>
+                      <span>PostgreSQL</span>
+                      <span>JWT</span>
+                      <span>REST APIs</span>
+                      <span>C++</span>
                     </div>
                     <div className="flip-hint">Click card to connect ↺</div>
                   </div>
@@ -177,7 +179,7 @@ export default function About() {
                     <h3>Madhav Sharma</h3>
                     <span className="maker-role">Fullstack Developer</span>
                     <p className="maker-bio">
-                      Specializing in responsive React UI architecture, client-side PDF layout parsing, and intuitive candidate user experiences.
+                      Currently working on Web Development & AI Projects. Pursuing Bachelor of Technology (B.Tech) in Computer Science. Open to opportunities as a Frontend developer or backend developer.
                     </p>
                     <div className="maker-tech-chips">
                       <span>React</span>
