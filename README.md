@@ -2,7 +2,7 @@
 
 <img src="https://img.shields.io/badge/AI%20Powered-Resume%20Analyser-6366f1?style=for-the-badge&logo=sparkles&logoColor=white" alt="AI Resume Analyser" />
 
-<h1>🧠 AI Resume Analyser</h1>
+<h1>Resume Roaster - AI Resume Analyser</h1>
 
 <p>Upload your resume. Get brutally honest, AI-powered feedback — instantly.</p>
 
@@ -22,7 +22,7 @@
 
 ## ✨ What It Does
 
-**AI Resume Analyser** is a full-stack MERN application that parses your PDF resume and sends it through a multi-model AI consensus pipeline. You get structured, actionable feedback scored across multiple dimensions — all within seconds.
+**Resume Roaster** is a full-stack MERN application that parses your PDF resume and sends it through a multi-model AI consensus pipeline. You get structured, actionable feedback scored across multiple dimensions — all within seconds.
 
 ---
 
@@ -217,5 +217,5 @@ Internal / team project — not licensed for public distribution.
 ---
 
 <div align="center">
-  <sub>Built with ☕ and a healthy distrust of vague resumes.</sub>
+  <sub>Built with ☕ from BU grads.</sub>
 </div>
