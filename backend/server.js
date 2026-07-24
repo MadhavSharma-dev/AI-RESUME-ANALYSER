@@ -76,6 +76,10 @@ app.use(errorHandler);
 
 // ─── Start Server ───────────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  logger.info(`[Server] running on port ${PORT}`);
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    logger.info(`[Server] running on port ${PORT}`);
+  });
+}
+
+export default app;
