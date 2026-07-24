@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import HeaderUtils from "../common/HeaderUtils";
+import prashantImg from "../../assets/makers/prashant.jpeg";
+import madhavImg from "../../assets/makers/madhav.jpeg";
 import "./About.css";
 
 export default function About() {
@@ -120,7 +122,7 @@ export default function About() {
             >
               <div className="flip-card-inner">
                 <div className="flip-card-front">
-                  <div className="maker-avatar">PK</div>
+                  <img src={prashantImg} alt="Prashant Kumar" className="maker-avatar" />
                   <div className="maker-info">
                     <h3>Prashant Kumar</h3>
                     <span className="maker-role">Fullstack Developer</span>
@@ -170,7 +172,7 @@ export default function About() {
             >
               <div className="flip-card-inner">
                 <div className="flip-card-front">
-                  <div className="maker-avatar">MS</div>
+                  <img src={madhavImg} alt="Madhav Sharma" className="maker-avatar" />
                   <div className="maker-info">
                     <h3>Madhav Sharma</h3>
                     <span className="maker-role">Fullstack Developer</span>
@@ -216,7 +218,7 @@ export default function About() {
       </div>
 
       <footer className="about-footer">
-        <p>Built with precision for ambitious candidates. © 2026 Resume Roaster.</p>
+        <p>Built with precision for ambitious candidates from BU grads. © 2026 Resume Roaster</p>
       </footer>
     </div>
   );

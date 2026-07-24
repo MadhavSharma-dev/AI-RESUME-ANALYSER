@@ -568,6 +568,10 @@ function Dashboard({ user }) {
               </div>
             </motion.div>
           </motion.div>
+
+          <footer className="dashboard-footer" style={{ marginTop: "3rem", padding: "1.5rem 0", textAlign: "center", borderTop: "1px solid var(--border, rgba(31, 42, 68, 0.08))", color: "var(--text-secondary, #55627a)", fontSize: "0.875rem" }}>
+            <p>Built with precision for ambitious candidates from BU grads. © 2026 Resume Roaster</p>
+          </footer>
         </>
       )}
 
